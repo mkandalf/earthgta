@@ -474,8 +474,6 @@ Truck.prototype.tick = function() {
   latLonBox.setWest(lla[1] + radius);
   latLonBox.setRotation(-newhtr[0]);
 
-  me.tickPopups(dt);
-  
   me.cameraFollow(dt, gpos, me.localFrame);
 };
 
