@@ -73,8 +73,8 @@ var BALLOON_FG = '#000000';
 var BALLOON_BG = '#FFFFFF';
 
 var GRAVITY = 100;
-var CAM_HEIGHT = 10;
-var TRAILING_DISTANCE = 50;
+var CAM_HEIGHT = 8;
+var TRAILING_DISTANCE = 30;
 
 var ACCEL = 50.0;
 var DECEL = 80.0;
