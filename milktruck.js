@@ -19,8 +19,12 @@ limitations under the License.
 
 window.truck = null;
 
+host = 'http://localhost:8000/';
+
+model = 'car';
+
 var car = {
-  urls: ['./sport_car/models/sport_car.dae'],
+  urls: [host + 'sport_car/models/sport_car.dae'],
   animated: false,
   accel: 50.0,
   decel: 80.0,
@@ -33,7 +37,7 @@ var car = {
 };
 
 var person = {
-  urls: ['http://chrisdiamanti.com/walk/an1.dae'],
+  urls: [host + 'person/an1.dae'],
   animated: false,
   accel: 5.0,
   decel: 8.0,
@@ -62,7 +66,7 @@ var INIT_LOC = {
   heading: 90
 }; // googleplex
 
-var PREVENT_START_AIRBORNE = true;
+var PREVENT_START_AIRBORNE = false;
 var TICK_MS = 66;
 
 var BALLOON_FG = '#000000';
@@ -117,7 +121,7 @@ function Truck() {
   ge.getOptions().setMouseNavigationEnabled(false);
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
-  me.loadModel(person);
+  me.loadModel(car);
 
   me.finishInit();
 
@@ -133,7 +137,7 @@ Truck.prototype.loadModel = function(model){
   me.location = me.model.getLocation();
   me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   me.linker = ge.createLink('');
-  me.linker.setHref(MODEL_URL);
+  me.linker.setHref(model.urls[0]);
   me.model.setLink(me.linker);
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
@@ -198,6 +202,7 @@ leftButtonDown = false;
 rightButtonDown = false;
 gasButtonDown = false;
 reverseButtonDown = false;
+switchModel = false;
 
 function keyDown(event) {
   if (!event) {
@@ -214,6 +219,9 @@ function keyDown(event) {
     event.returnValue = false;
   } else if (event.keyCode == 40) {  // Down.
     reverseButtonDown = true;
+    event.returnValue = false;
+  } else if(event.keyCode == 83){
+    switchModel = true;
     event.returnValue = false;
   } else {
     return true;
@@ -252,6 +260,19 @@ function clamp(val, min, max) {
 
 Truck.prototype.tick = function() {
   var me = this;
+
+  if (switchModel){
+    ge.getFeatures().removeChild(ge.getFeatures().getLastChild());
+    if (model == 'car'){
+      me.loadModel(person);
+      model = 'person';
+    }
+    else {
+      me.loadModel(car);
+      model = 'car';
+    }
+    switchModel = false;
+  }
 
   var now = (new Date()).getTime();
   // dt is the delta-time since last tick, in seconds
