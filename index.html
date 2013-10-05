@@ -18,14 +18,6 @@
 
     function el(e) { return document.getElementById(e); }
 
-    function Sample(description, url) {
-      this.description = description;
-      this.url = url;
-      return this;
-    }
-
-    var samples = [];
-
     function init() {
       geocoder = new GClientGeocoder();
 

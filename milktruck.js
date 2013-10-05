@@ -24,7 +24,7 @@ host = 'http://localhost:8000/';
 model = 'car';
 
 var car = {
-  urls: [host + 'sport_car/models/sport_car.dae'],
+  url: host + 'sport_car/models/sport_car.dae',
   animated: false,
   accel: 50.0,
   decel: 80.0,
@@ -130,12 +130,15 @@ Truck.prototype.loadModel = function(model){
   var me = this;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
+
   ge.getFeatures().appendChild(me.placemark);
   me.location = me.model.getLocation();
   me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
   me.linker = ge.createLink('');
-  me.linker.setHref(model.urls[0]);
+  me.linker.setHref(model.url);
   me.model.setLink(me.linker);
+
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
 }
