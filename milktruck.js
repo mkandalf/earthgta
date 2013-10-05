@@ -464,7 +464,7 @@ Truck.prototype.tick = function() {
   me.roll = clamp(me.roll, -30, 30);
   absRoll += me.roll;
 
-  me.orientation.set(newhtr[0], newhtr[1], absRoll);
+  me.orientation.set(newhtr[0] + 180, newhtr[1], absRoll);
 
   var latLonBox = me.shadow.getLatLonBox();
   var radius = .00005;
@@ -603,8 +603,8 @@ Truck.prototype.cameraFollow = function(dt, truckPos, localToGlobalFrame) {
 
   var la = ge.getView().copyAsLookAt(ge.ALTITUDE_RELATIVE_TO_SEA_FLOOR);
 
+  var camHeading = fixAngle(la.getHeading() + 180);
   var truckHeading = me.model.getOrientation().getHeading();
-  var camHeading = la.getHeading();
 
   var deltaHeading = fixAngle(truckHeading - camHeading);
   var heading = camHeading + c1 * deltaHeading;
@@ -615,14 +615,14 @@ Truck.prototype.cameraFollow = function(dt, truckPos, localToGlobalFrame) {
   var headingDir = V3.rotate(localToGlobalFrame[1], localToGlobalFrame[2],
                              -headingRadians);
   var camPos = V3.add(truckPos, V3.scale(localToGlobalFrame[2], CAM_HEIGHT));
-  camPos = V3.add(camPos, V3.scale(headingDir, -TRAILING_DISTANCE));
+  camPos = V3.add(camPos, V3.scale(headingDir, TRAILING_DISTANCE));
   var camLla = V3.cartesianToLatLonAlt(camPos);
   var camLat = camLla[0];
   var camLon = camLla[1];
   var camAlt = camLla[2] - ge.getGlobe().getGroundAltitude(camLat, camLon);
 
   la.set(camLat, camLon, camAlt, ge.ALTITUDE_RELATIVE_TO_SEA_FLOOR, 
-        heading, 80 /*tilt*/, 0 /*range*/);
+        fixAngle(heading + 180), 80 /*tilt*/, 0 /*range*/);
   ge.getView().setAbstractView(la);
 };
 
