@@ -21,11 +21,16 @@ window.truck = null;
 
 // Pull the Milktruck model from 3D Warehouse.
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
+/*
 /*var MODEL_URL =
   'http://sketchup.google.com/3dwarehouse/download?'
   + 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
   + 'fn=milktruck&ctyp=milktruck';*/
-var MODEL_URL = "http://sketchup.google.com/3dwarehouse/download?mid=42134787c805fffe1ab9df4be75138d0&rtyp=zip&fn=sport_car&ctyp=other&prevstart=0&ts=1223354807000";
+//var MODEL_URL = "http://sketchup.google.com/3dwarehouse/download?mid=42134787c805fffe1ab9df4be75138d0&rtyp=zip&fn=sport_car&ctyp=other&prevstart=0&ts=1223354807000";
+var MODEL_URL = 'http://chrisdiamanti.com/walk/an1.dae';
+  //'http://sketchup.google.com/3dwarehouse/download?'
+  //+ 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
+  //+ 'fn=milktruck&ctyp=milktruck';
 var INIT_LOC = {
   lat: 37.423501,
   lon: -122.086744,
@@ -38,8 +43,8 @@ var TICK_MS = 66;
 var BALLOON_FG = '#000000';
 var BALLOON_BG = '#FFFFFF';
 
-var GRAVITY = 9.8*2;
-var CAM_HEIGHT = 10/2;
+var GRAVITY = 100;
+var CAM_HEIGHT = 10;
 var TRAILING_DISTANCE = 50;
 
 var ACCEL = 50.0;
@@ -86,29 +91,42 @@ function Truck() {
   ge.getOptions().setMouseNavigationEnabled(false);
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
-  window.google.earth.fetchKml(ge, MODEL_URL,
-                               function(obj) { console.log(obj); me.finishInit(obj); });
+  me.placemark = ge.createPlacemark('');
+  me.model = ge.createModel('');
+  ge.getFeatures().appendChild(me.placemark);
+  me.location = me.model.getLocation();
+  me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  me.linker = ge.createLink('');
+  me.linker.setHref(MODEL_URL);
+  me.model.setLink(me.linker);
+  me.placemark.setGeometry(me.model);
+  me.orientation = me.model.getOrientation();
+
+  me.finishInit();
+
+  //window.google.earth.fetchKml(ge, MODEL_URL,
+                               //function(obj) { me.finishInit(obj); });
 }
 
-Truck.prototype.finishInit = function(kml) {
+Truck.prototype.finishInit = function() {
   var me = this;
 
-  walkKmlDom(kml, function() {
-    if (this.getType() == 'KmlPlacemark' &&
-        this.getGeometry() &&
-        this.getGeometry().getType() == 'KmlModel')
-      me.placemark = this;
-  });
+  //walkKmlDom(kml, function() {
+    //if (this.getType() == 'KmlPlacemark' &&
+        //this.getGeometry() &&
+        //this.getGeometry().getType() == 'KmlModel')
+      //me.placemark = this;
+  //});
 
-  me.model = me.placemark.getGeometry();
-  me.orientation = me.model.getOrientation();
-  me.location = me.model.getLocation();
+  //me.model = me.placemark.getGeometry();
+  //me.orientation = me.model.getOrientation();
+  //me.location = me.model.getLocation();
 
-  me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
-  me.orientation.setHeading(90);
-  me.model.setOrientation(me.orientation);
+  //me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  //me.orientation.setHeading(90);
+  //me.model.setOrientation(me.orientation);
 
-  ge.getFeatures().appendChild(me.placemark);
+  //ge.getFeatures().appendChild(me.placemark);
 
   me.balloon = ge.createHtmlStringBalloon('');
   me.balloon.setFeature(me.placemark);
