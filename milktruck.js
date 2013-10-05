@@ -19,7 +19,32 @@ limitations under the License.
 
 window.truck = null;
 
-// Pull the Milktruck model from 3D Warehouse.
+var car = {
+  urls: ['./sport_car/models/sport_car.dae'],
+  animated: false,
+  accel: 50.0,
+  decel: 80.0,
+  max_rev_speed: 40.0,
+  max_speed: 100.0,
+  steer_roll: -1.0,
+  roll_spring: 0.5,
+  roll_damp: -0.16,
+  gravity: 9.8
+};
+
+var person = {
+  urls: ['http://chrisdiamanti.com/walk/an1.dae'],
+  animated: false,
+  accel: 5.0,
+  decel: 8.0,
+  max_rev_speed: 8.0,
+  max_speed: 5.0,
+  steer_roll: 0.0,
+  roll_spring: 0.0,
+  roll_damp: -0.16,
+  gravity: 50
+};
+
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
 var MODEL_URL = 'http://chrisdiamanti.com/walk/an1.dae';
   //'http://sketchup.google.com/3dwarehouse/download?'
@@ -31,7 +56,7 @@ var INIT_LOC = {
   heading: 90
 }; // googleplex
 
-var PREVENT_START_AIRBORNE = false;
+var PREVENT_START_AIRBORNE = true;
 var TICK_MS = 66;
 
 var BALLOON_FG = '#000000';
@@ -48,6 +73,7 @@ var MAX_REVERSE_SPEED = 40.0;
 var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
+
 
 function Truck() {
   var me = this;
@@ -85,6 +111,16 @@ function Truck() {
   ge.getOptions().setMouseNavigationEnabled(false);
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
+  me.loadModel(person);
+
+  me.finishInit();
+
+  //window.google.earth.fetchKml(ge, MODEL_URL,
+                               //function(obj) { me.finishInit(obj); });
+}
+
+Truck.prototype.loadModel = function(model){
+  var me = this;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
   ge.getFeatures().appendChild(me.placemark);
@@ -95,11 +131,6 @@ function Truck() {
   me.model.setLink(me.linker);
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
-
-  me.finishInit();
-
-  //window.google.earth.fetchKml(ge, MODEL_URL,
-                               //function(obj) { me.finishInit(obj); });
 }
 
 Truck.prototype.finishInit = function() {
@@ -421,6 +452,7 @@ Truck.prototype.tick = function() {
   me.cameraFollow(dt, gpos, me.localFrame);
 };
 
+
 // TODO: would be nice to have globe.getGroundNormal() in the API.
 function estimateGroundNormal(pos, frame) {
   // Take four height samples around the given position, and use it to
@@ -462,7 +494,7 @@ Truck.prototype.tickPopups = function(dt) {
     if (speed < 20) {
       me.idleTimer += dt;
       if (me.idleTimer > 10.0) {
-        me.showIdlePopup();
+        //me.showIdlePopup();
       }
       me.fastTimer = 0;
     } else {
