@@ -19,7 +19,36 @@ limitations under the License.
 
 window.truck = null;
 
-// Pull the Milktruck model from 3D Warehouse.
+host = 'http://localhost:8000/';
+
+model = 'car';
+
+var car = {
+  urls: [host + 'sport_car/models/sport_car.dae'],
+  animated: false,
+  accel: 50.0,
+  decel: 80.0,
+  max_rev_speed: 40.0,
+  max_speed: 100.0,
+  steer_roll: -1.0,
+  roll_spring: 0.5,
+  roll_damp: -0.16,
+  gravity: 9.8
+};
+
+var person = {
+  urls: [host + 'person/an1.dae'],
+  animated: false,
+  accel: 5.0,
+  decel: 8.0,
+  max_rev_speed: 8.0,
+  max_speed: 5.0,
+  steer_roll: 0.0,
+  roll_spring: 0.0,
+  roll_damp: -0.16,
+  gravity: 50
+};
+
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
 /*
 /*var MODEL_URL =
@@ -54,6 +83,7 @@ var MAX_REVERSE_SPEED = 40.0;
 var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
+
 
 function Truck() {
   var me = this;
@@ -91,21 +121,26 @@ function Truck() {
   ge.getOptions().setMouseNavigationEnabled(false);
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
+  me.loadModel(car);
+
+  me.finishInit();
+
+  //window.google.earth.fetchKml(ge, MODEL_URL,
+                               //function(obj) { me.finishInit(obj); });
+}
+
+Truck.prototype.loadModel = function(model){
+  var me = this;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
   ge.getFeatures().appendChild(me.placemark);
   me.location = me.model.getLocation();
   me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   me.linker = ge.createLink('');
-  me.linker.setHref(MODEL_URL);
+  me.linker.setHref(model.urls[0]);
   me.model.setLink(me.linker);
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
-
-  me.finishInit();
-
-  //window.google.earth.fetchKml(ge, MODEL_URL,
-                               //function(obj) { me.finishInit(obj); });
 }
 
 Truck.prototype.finishInit = function() {
@@ -167,6 +202,7 @@ leftButtonDown = false;
 rightButtonDown = false;
 gasButtonDown = false;
 reverseButtonDown = false;
+switchModel = false;
 
 function keyDown(event) {
   if (!event) {
@@ -183,6 +219,9 @@ function keyDown(event) {
     event.returnValue = false;
   } else if (event.keyCode == 40) {  // Down.
     reverseButtonDown = true;
+    event.returnValue = false;
+  } else if(event.keyCode == 83){
+    switchModel = true;
     event.returnValue = false;
   } else {
     return true;
@@ -221,6 +260,19 @@ function clamp(val, min, max) {
 
 Truck.prototype.tick = function() {
   var me = this;
+
+  if (switchModel){
+    ge.getFeatures().removeChild(ge.getFeatures().getLastChild());
+    if (model == 'car'){
+      me.loadModel(person);
+      model = 'person';
+    }
+    else {
+      me.loadModel(car);
+      model = 'car';
+    }
+    switchModel = false;
+  }
 
   var now = (new Date()).getTime();
   // dt is the delta-time since last tick, in seconds
@@ -425,6 +477,7 @@ Truck.prototype.tick = function() {
   me.cameraFollow(dt, gpos, me.localFrame);
 };
 
+
 // TODO: would be nice to have globe.getGroundNormal() in the API.
 function estimateGroundNormal(pos, frame) {
   // Take four height samples around the given position, and use it to
@@ -466,7 +519,7 @@ Truck.prototype.tickPopups = function(dt) {
     if (speed < 20) {
       me.idleTimer += dt;
       if (me.idleTimer > 10.0) {
-        me.showIdlePopup();
+        //me.showIdlePopup();
       }
       me.fastTimer = 0;
     } else {
