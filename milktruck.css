@@ -2,3 +2,10 @@ body {
   margin: 0;
   padding: 0;
 }
+
+#map3d {
+  height: 500px;
+}
+
+#teleport {
+}
