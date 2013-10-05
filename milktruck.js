@@ -21,10 +21,11 @@ window.truck = null;
 
 // Pull the Milktruck model from 3D Warehouse.
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
-var MODEL_URL =
+/*var MODEL_URL =
   'http://sketchup.google.com/3dwarehouse/download?'
   + 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
-  + 'fn=milktruck&ctyp=milktruck';
+  + 'fn=milktruck&ctyp=milktruck';*/
+var MODEL_URL = "http://sketchup.google.com/3dwarehouse/download?mid=42134787c805fffe1ab9df4be75138d0&rtyp=zip&fn=sport_car&ctyp=other&prevstart=0&ts=1223354807000";
 var INIT_LOC = {
   lat: 37.423501,
   lon: -122.086744,
@@ -37,8 +38,8 @@ var TICK_MS = 66;
 var BALLOON_FG = '#000000';
 var BALLOON_BG = '#FFFFFF';
 
-var GRAVITY = 9.8;
-var CAM_HEIGHT = 10;
+var GRAVITY = 9.8*2;
+var CAM_HEIGHT = 10/2;
 var TRAILING_DISTANCE = 50;
 
 var ACCEL = 50.0;
@@ -86,7 +87,7 @@ function Truck() {
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
   window.google.earth.fetchKml(ge, MODEL_URL,
-                               function(obj) { me.finishInit(obj); });
+                               function(obj) { console.log(obj); me.finishInit(obj); });
 }
 
 Truck.prototype.finishInit = function(kml) {
