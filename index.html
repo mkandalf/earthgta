@@ -19,6 +19,7 @@
     var ge = null;
     var geocoder;
     var scene;
+    var GTAref = new Firebase('https://gtavi.firebaseio.com/');
 
     username = prompt("Enter a username:");
 
@@ -39,6 +40,38 @@
       ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
       ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
       scene = new Scene();
+
+      GTAref.on('child_added', function(snapshot) {
+        var user = snapshot.val();
+        if (!user.username) return;
+        console.log(scene);
+        if (!scene) return;
+        if (!scene.users) return;
+        // alert(user.username);
+        // console.log(user.username == username);
+        if (user.username != username) {
+          if (scene.users[user.username]) {
+            // move the user object
+            var object = scene.users[user.username];
+            object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+          } else {
+            // instantiate a user object and draw it
+            var object = {
+              type: user.type,
+              options: {
+               urls: [user.url],
+               lat: user.lat,
+               long: user.lng,
+               alt: user.alt,
+               scale: 1.0
+              }
+            };
+            scene.addObject(object);
+            scene.users[user.username] = object;
+          }
+        }
+      });
+
       keyboardFocusHack(ge);
     }
 
