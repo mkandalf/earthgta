@@ -1009,7 +1009,7 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
   }
   me.vel = [0, 0, 0];
   window.conditions = "";
-  jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; window.conditions = parsed_json['current_observation']['weather']; alert("Current temperature in " + location + " is: " + window.conditions); console.log("conditions: "+window.conditions);
+  jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; window.conditions = parsed_json['current_observation']['weather']; console.log("conditions: "+window.conditions);
   if (window.conditions.indexOf("Rain")>=0){
     makeItRain();
   }} }); });
