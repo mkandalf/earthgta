@@ -201,33 +201,34 @@ function plotCars(lat1, lng1, lat2, lng2, self, cb) {
 }
 
 GTAref.on('child_added', function(snapshot) {
- var user = snapshot.val();
- if (!user.username) return;
- if (!scene) return;
- if (!scene.users) return;
- // alert(user.username);
- // console.log(user.username == username);
- if (user.username != username) {
-   if (scene.users[user.username]) {
-     // move the user object
-     var object = scene.users[user.username];
-     object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
-   } else {
-     // instantiate a user object and draw it
-     var object = {
-       type: user.type,
-       options: {
-        urls: [user.url],
-        lat: user.lat,
-        long: user.lng,
-        alt: user.alt,
-        scale: 1.0
-       }
-     };
-     scene.addObject(object);
-     scene.users[user.username] = object;
-   }
- }
+  var user = snapshot.val();
+  if (!user.username) return;
+  console.log(user.username);
+  if (!scene) return;
+  if (!scene.users) return;
+  // alert(user.username);
+  // console.log(user.username == username);
+  if (user.username != username) {
+    if (scene.users[user.username]) {
+      // move the user object
+      var object = scene.users[user.username];
+      object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+    } else {
+      // instantiate a user object and draw it
+      var object = {
+        type: user.type,
+        options: {
+         urls: [user.url],
+         lat: user.lat,
+         long: user.lng,
+         alt: user.alt,
+         scale: 1.0
+        }
+      };
+      scene.addObject(object);
+      scene.users[user.username] = object;
+    }
+  }
 });
 
 function Scene() {
