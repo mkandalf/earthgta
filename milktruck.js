@@ -686,7 +686,6 @@ Truck.prototype.update = function() {
 
   if (!me.checking_road){
     me.checking_road = true;
-    console.log(lla);
     check_points(me, lla[1], lla[0]);
   }
 };
@@ -862,7 +861,6 @@ function float_cmp(a, b){
   return Math.abs(a - b) < 0.00012;
 }
 function check_points(model, x, y){
-  //console.log('checking');
   google.maps.Event.clearListeners(DS_directions, 'load');
   google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(model, x, y));
   google.maps.Event.addListener(DS_directions, 'error', function() {model.checking_road = false;});
@@ -876,11 +874,8 @@ function DS_directionsLoaded(model, x, y){
     var new_y = DS_directions.getRoute(0).getStep(0).getLatLng().y;
     if (float_cmp(x, new_x)
      && float_cmp(y, new_y)){
-       //console.log('on road');
      }
     else {
-      //console.log ('off road, moving...');
-      //console.log(x, y, new_x, new_y);
       model.dropAt(new_y, new_x, 90);
       model.vel = [0,0,0];
     }
