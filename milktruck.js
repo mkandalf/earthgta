@@ -23,6 +23,9 @@ host = 'http://localhost:8000/';
 
 model = 'car';
 
+var DS_map;
+var DS_directions;
+
 var car = {
   url: host + 'sport_car/models/sport_car',
   animated: false,
@@ -113,17 +116,9 @@ var addObject = function(object){
   object.model.setScale(scale);
 }
 
-/*
- * Scene
- * an array of cars
- * an array of people
- * and player1
- *
- * addObject
- * removeObject
- *
- * update - update all objects
- */
+var mapRoute = function(route, cb) {
+
+}
 
 function Scene() {
   // initialize
@@ -133,48 +128,42 @@ function Scene() {
 
   self.player1 = new Truck();
 
-  self.initCars();
-  self.initPeople();
+  self.createCars();
+  self.createPeople();
 
   google.earth.addEventListener(ge, "frameend", function() { self.update(); });
 }
 
-Scene.prototype.initCars = function() {
-  console.log("initCars");
+Scene.prototype.createCars = function() {
+  console.log("createCars");
   var self = this;
-  // while (self.cars.length < 20) {
-  // }
+  while (self.cars.length < 20) {
+    var lat = self.player1.location.getLatitude();
+    var lng = self.player1.location.getLongitude();
+
+    route = "";
+
+    mapRoute(route, function(data) {
+      var car = {
+        options: {
+          urls: [],
+          lat: 0,
+          long: 0,
+          alt: 0
+        }
+      }
+      self.addObject(car);
+      self.cars.push(car);
+    });
+    break;
+  }
 }
 
-Scene.prototype.initPeople = function() {
-  console.log("initPeople");
+Scene.prototype.createPeople = function() {
+  console.log("createPeople");
   var self = this;
   // while (self.people.length < 20) {
   // }
-}
-
-Scene.prototype.addObject = function(object){
-  // adds an object to the scene
-  object.placemark = ge.createPlacemark('');
-  object.model = ge.createModel('');
-  
-  ge.getFeatures().appendChild(object.placemark);
-
-  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
-  
-  object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
-  object.model.setLink(object.linker);
-
-  object.placemark.setGeometry(object.model);
-  object.model.getLocation().setLatLngAlt(object.options.lat,
-                                          object.options.long,
-                                          object.options.alt);
-  scale = ge.createScale('');
-  scale.setX(object.options.scale);
-  scale.setY(object.options.scale);
-  scale.setZ(object.options.scale);
-  object.model.setScale(scale);
 }
 
 Scene.prototype.removeObject = function(object) {
@@ -192,6 +181,31 @@ Scene.prototype.update = function() {
   });
 
   self.player1.update();
+}
+
+Scene.prototype.addObject = function(object){
+  // adds an object to the scene
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt);
+  if (object.options.scale) {
+    scale = ge.createScale('');
+    scale.setX(object.options.scale);
+    scale.setY(object.options.scale);
+    scale.setZ(object.options.scale);
+    object.model.setScale(scale);
+  }
 }
 
 
@@ -248,6 +262,7 @@ function loadAnimationModel(model, frame){
 Truck.prototype.loadModel = function(model){
   var me = this;
   me.data = model;
+  me.checking_road = false;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
   me.frame = 1;
@@ -502,9 +517,9 @@ Truck.prototype.update = function() {
   }
   else {
     if (leftButtonDown || rightButtonDown){
-      if (leftTurn) {
+      if (leftButtonDown) {
           n = 1;
-      } else if (rightTurn) {
+      } else if (rightButtonDown) {
           n = -1;
       }
       steerAngle = n * 25 * dt * Math.PI / 180;
@@ -668,6 +683,11 @@ Truck.prototype.update = function() {
   latLonBox.setRotation(-newhtr[0]);
 
   me.cameraFollow(dt, gpos, me.localFrame);
+
+  if (!me.checking_road){
+    me.checking_road = true;
+    check_points(me, lla[1], lla[0]);
+  }
 };
 
 
@@ -774,6 +794,27 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
   }
 };
 
+Truck.prototype.dropAt = function(lat, lon, heading) {
+  var me = this;
+  me.model.getLocation().setLatitude(lat);
+  me.model.getLocation().setLongitude(lon);
+  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 50.0);
+  if (heading == null) {
+    heading = 0;
+  }
+  me.vel = [0, 0, 0];
+
+  me.localAnchorLla = [lat, lon, 0];
+  me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
+  me.localFrame = M33.makeLocalToGlobalFrame(me.localAnchorLla);
+  me.modelFrame = M33.identity();
+  me.modelFrame[0] = V3.rotate(me.modelFrame[0], me.modelFrame[2], -heading);
+  me.modelFrame[1] = V3.rotate(me.modelFrame[1], me.modelFrame[2], -heading);
+  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon)];
+
+  me.cameraCut();
+};
+
 // Move our anchor closer to our current position.  Retain our global
 // motion state (position, orientation, velocity).
 Truck.prototype.adjustAnchor = function() {
@@ -814,4 +855,30 @@ function fixAngle(a) {
     a -= 360;
   }
   return a;
+}
+
+function float_cmp(a, b){
+  return Math.abs(a - b) < 0.00012;
+}
+function check_points(model, x, y){
+  google.maps.Event.clearListeners(DS_directions, 'load');
+  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(model, x, y));
+  google.maps.Event.addListener(DS_directions, 'error', function() {model.checking_road = false;});
+  //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
+  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
+            {getSteps: true, getPolyline: true});
+}
+function DS_directionsLoaded(model, x, y){
+  return function(){
+    var new_x = DS_directions.getRoute(0).getStep(0).getLatLng().x ;
+    var new_y = DS_directions.getRoute(0).getStep(0).getLatLng().y;
+    if (float_cmp(x, new_x)
+     && float_cmp(y, new_y)){
+     }
+    else {
+      model.dropAt(new_y, new_x, 90);
+      model.vel = [0,0,0];
+    }
+    model.checking_road = false;
+  }
 }
