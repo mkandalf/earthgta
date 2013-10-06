@@ -49,6 +49,16 @@ var person = {
   gravity: 50
 };
 
+var muzzle_flash = {
+  options: {
+    urls: [host + 'muzzle_flash/models/muzzle_flash.dae'],
+    lat: 0,
+    long: 0,
+    alt: 0,
+    animated: false
+  }
+};
+
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
 /*
 /*var MODEL_URL =
@@ -83,6 +93,24 @@ var MAX_REVERSE_SPEED = 40.0;
 var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
+
+var addObject = function(object){
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt)
+}
 
 
 function Truck() {
@@ -142,6 +170,8 @@ Truck.prototype.loadModel = function(model){
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
 }
+
+
 
 Truck.prototype.finishInit = function() {
   var me = this;
@@ -203,6 +233,7 @@ rightButtonDown = false;
 gasButtonDown = false;
 reverseButtonDown = false;
 switchModel = false;
+shootButtonDown = false;
 
 function keyDown(event) {
   if (!event) {
@@ -223,7 +254,13 @@ function keyDown(event) {
   } else if(event.keyCode == 83){
     switchModel = true;
     event.returnValue = false;
-  } else {
+  } else if(event.keyCode == 32){
+    console.log("shoot");
+    shootButtonDown = true;
+    event.returnValue = false;
+  }
+   else {
+    console.log(event.keyCode);
     return true;
   }
   return false;
@@ -244,6 +281,10 @@ function keyUp(event) {
     event.returnValue = false;
   } else if (event.keyCode == 40) {  // Down.
     reverseButtonDown = false;
+    event.returnValue = false;
+  }
+  else if (event.keyCode == 32){
+    shootButtonDown = false;
     event.returnValue = false;
   }
   return false;
@@ -274,6 +315,15 @@ Truck.prototype.tick = function() {
     switchModel = false;
   }
 
+  if (shootButtonDown) {
+    muzzle_flash.options.lat = me.location.getLatitude();
+    muzzle_flash.options.long = me.location.getLongitude();
+    muzzle_flash.options.alt = me.location.getAltitude();
+    
+    addObject(muzzle_flash);
+    console.log(muzzle_flash.getLocation().getLatitude());
+    shootButtonDown = false;
+  }
   var now = (new Date()).getTime();
   // dt is the delta-time since last tick, in seconds
   var dt = (now - me.lastMillis) / 1000.0;
