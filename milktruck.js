@@ -151,42 +151,45 @@ var addObject = function(object){
   object.model.setScale(scale);
 }
 
-function plotCars(lat1, lng1, lat2, lng2, self, cb) {
-  var route = "from: " + lat1 + ", " + lng1 + " to: " + lat2 + ", " + lng2;
-  console.log(route);
-
+function plotCars(lat1, lon1, lat2, lon2, self, cb) {
+  var route = "from: " + lat1 + ", " + lon1 + " to: " + lat2 + ", " + lon2;
   get_directions(route, function(data) {
     var steps = data.g.Directions.Routes[0].Steps;
     console.log(steps);
 
-    if (steps.length > 1) {
-      var s = steps[1];
-      var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
-      console.log(steps.map(function(s) { return {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]} }));
-      console.log("first step");
-      console.log(lng1, lat1);
-      console.log(p);
-      console.log("truck");
+    var i;
+    for (i = 0; i < steps.length - 1; i++){
+      var s1 = steps[i];
+      var s2 = steps[i + 1];
+      //var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
+      //console.log(steps.map(function(s) { return {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]} }));
+      //console.log("first step");
+      //console.log(lng1, lat1);
+      //console.log(p);
+      //console.log("truck");
 
-      var o = 6;
-      for (var i = 1; i < o; i++) {
-        (function() {
-          var p1 = V3.latLonAltToCartesian([lat1, lng1, 0]);
-          var p2 = V3.latLonAltToCartesian([p.lat, p.lng, 0]);
+      var p1 = V3.latLonAltToCartesian(s1.Point.coordinates);
+      var p2 = V3.latLonAltToCartesian(s2.Point.coordinates);
+      var dist = Math.sqrt(
+          Math.pow(p1[0] - p2[0], 2.0) +
+          Math.pow(p1[1] - p2[1], 2.0) +
+          Math.pow(p1[2] - p2[2], 2.0)
+      );
+      var o = dist / 100;
+      var s = V3.sub(p2, p1);
+      var n = V3.normalize(s);
+      console.log('num cars: ' + o);
+      for (var j = 0; j < Math.floor(o); j++) {
+        var v = V3.scale(n, j * dist / 100);
+        var m = V3.cartesianToLatLonAlt(V3.add(p1,v));
 
-          var s = V3.sub(p1, p2)
-          var n = V3.add(p1, V3.scale(V3.normalize(s), i))
-          var m = V3.cartesianToLatLonAlt(n);
-
-          console.log(m);
-          
-          // self.cars.push(new Truck({lat: lat1, lng: lng1}));
-          var car = new Truck({
-            lat: m[0],
-            lng: m[1]
-          });
-          self.cars.push(car);
-        })()
+        console.log(m);
+        
+        var car = new Truck({
+          lat: m[0],
+          lng: m[1]
+        });
+        self.cars.push(car);
       }
     }
       
@@ -230,11 +233,9 @@ Scene.prototype.createCars = function() {
       lat: lat
     });
     self.cars.push(player3);
-
-
-    plotCars(lat, lng, lat + 0.005, lng, self, function() {});
         // plotCars(lat, lng, lat, lng + 0.005, self, function() {}));
 
+    //plotCars(lat - 0.005, lng, lat + 0.005, lng, self, function() {});
     break;
   }
 }
@@ -322,6 +323,23 @@ Scene.prototype.update = function() {
     muzzle_flash.options.heading = scene.player1.model.getOrientation().getHeading();
     muzzle_flash.frames_left = 2;
 
+    var gunSound = new Audio('GUNSHOT.WAV');
+    gunSound.play();
+    var glassSound = new Audio('GLASSBRK.WAV');
+    glassSound.play();
+
+    //for (i = 0; i < scene.cars.length; i++){
+      //car = scene.cars[i];
+      //me_loc = scene.player1.model.getLocation();
+      //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+      //other_cart = V3.add(me_cart, V3.scale(V3.rotate([1,0,0], [0,0,1], scene.player1.model.getOrientation().getHeading() * Math.PI / 180), 1000));
+      //car_loc = car.model.getLocation();
+      //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+      //dist = V3.leftDistance(me_cart, other_cart, car_cart);
+      //console.log(me_cart, other_cart, car_cart);
+      //if (Math.abs(dist) < 10){
+      //}
+    //}
     self.addObject(muzzle_flash);
     self.flashes.push(muzzle_flash);
   }
@@ -479,7 +497,6 @@ Truck.prototype.nextFrame = function() {
 
 Truck.prototype.switchModel = function(url) {
   var me = this;
-  console.log(url);
   me.linker = ge.createLink('');
   me.linker.setHref(url);
   me.model.setLink(me.linker);
@@ -748,7 +765,6 @@ Truck.prototype.update = function() {
         vec = V3.sub(me_cart, car_cart);
 
         me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
-        console.log("Velocity: "+me.vel);
       }
     }
   }
