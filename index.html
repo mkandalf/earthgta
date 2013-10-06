@@ -49,15 +49,18 @@
         if (!scene.users) return;
         // alert(user.username);
         // console.log(user.username == username);
-        if (user.username != username) {
+        if (user.username !== username) {
+          // console.log("drawing");
           if (scene.users[user.username]) {
             // move the user object
             var object = scene.users[user.username];
             object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+            // console.log("drawing old");
           } else {
             // instantiate a user object and draw it
             var object = new Truck({lat: user.lat, lng: user.lng});
             scene.users[user.username] = object;
+            // console.log("drawing new");
           }
         }
       });
@@ -67,6 +70,7 @@
 
     function failureCallback(err) {
       // This function will be called if plugin fails to load, in case you need to handle that error condition.
+      wasted();
     }
 
     function submitLocation() {
@@ -86,6 +90,8 @@
   </script>
 </head>
   <body onload='init()' onunload="GUnload()" onKeyDown="return keyDown(event);" onKeyUp="return keyUp(event);">
+    <div id='wasted'>
+    </div>
     <div id='stars'>
       ★ ★ ★ ★ ★
     </div>
@@ -106,6 +112,11 @@
     </div>
     <div id='map' style='display:none'></div>
     <div id="forEmbed" style="position: absolute;"></div>
+    <script>
+      var wasted = function() {
+        document.getElementById('wasted').className = 'wasted';
+      }
+    </script>
   </body>
 </html>
 

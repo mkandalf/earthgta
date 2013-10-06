@@ -20,3 +20,17 @@ body {
   right: 0;
   top: 0;
 }
+
+#wasted {
+  position: absolute;
+  opacity: 0.5;
+  background-color: #444;
+  height: 500px;
+  /*width: 400px;*/
+  width: 100%;
+}
+
+#wasted.wasted {
+  z-index: 100;
+  background: url('wasted.png') repeat;
+}
