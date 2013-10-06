@@ -128,8 +128,72 @@ var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
 
-var mapRoute = function(route, cb) {
-  get_directions(route, cb);
+var addObject = function(object){
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt);
+  scale = ge.createScale('');
+  scale.setX(object.options.scale);
+  scale.setY(object.options.scale);
+  scale.setZ(object.options.scale);
+  object.model.setScale(scale);
+}
+
+function plotCars(lat1, lng1, lat2, lng2, self, cb) {
+  var route = "from: " + lat1 + ", " + lng1 + " to: " + lat2 + ", " + lng2;
+  console.log(route);
+
+  get_directions(route, function(data) {
+    var steps = data.g.Directions.Routes[0].Steps;
+    console.log(steps);
+
+    if (steps.length > 1) {
+      var s = steps[1];
+      var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
+      console.log(steps.map(function(s) { return {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]} }));
+      console.log("first step");
+      console.log(lng1, lat1);
+      console.log(p);
+      console.log("truck");
+
+      var o = 6;
+      for (var i = 1; i < o; i++) {
+        (function() {
+          var p1 = V3.latLonAltToCartesian([lat1, lng1, 0]);
+          var p2 = V3.latLonAltToCartesian([p.lat, p.lng, 0]);
+
+          var s = V3.sub(p1, p2)
+          var n = V3.add(p1, V3.scale(V3.normalize(s), i))
+          var m = V3.cartesianToLatLonAlt(n);
+
+          console.log(m);
+          
+          // self.cars.push(new Truck({lat: lat1, lng: lng1}));
+          var car = new Truck({
+            lat: m[0],
+            lng: m[1]
+          });
+          self.cars.push(car);
+        })()
+      }
+    }
+      
+    if (cb) {
+      cb();
+    }
+  });
 }
 
 function Scene() {
@@ -155,25 +219,23 @@ Scene.prototype.createCars = function() {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
-    route = "from: " + (lat - 0.005) + ", " + (lng) + " to: " + (lat + 0.005) + ", " + (lng);
-
     var player2 = new Truck({
       lng: lng,
       lat: lat+0.0001*Math.random()
     }, police);
     self.cars.push(player2);
-    /*
-    mapRoute(route, function(data) {
-      // console.log(data);
-      data.g.Directions.Routes[0].Steps.forEach(function(s, i) {
-        var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
-        console.log(p);
-        //var car = new Truck(p);
-        //self.cars.push(car);
-      });
+
+    var player3 = new Truck({
+      lng: lng+0.0001,
+      lat: lat
     });
+    self.cars.push(player3);
+
+
+    plotCars(lat, lng, lat + 0.005, lng, self, function() {});
+        // plotCars(lat, lng, lat, lng + 0.005, self, function() {}));
+
     break;
-    */
   }
 }
 
@@ -306,7 +368,7 @@ function distance(obj1, obj2){
   return Math.sqrt(
       Math.pow(obj1_cart[0] - obj2_cart[0], 2.0) +
       Math.pow(obj1_cart[1] - obj2_cart[1], 2.0) +
-      Math.pow(obj1_cart[1] - obj2_cart[1], 2.0)
+      Math.pow(obj1_cart[2] - obj2_cart[2], 2.0)
   );
 }
 
@@ -392,11 +454,13 @@ Truck.prototype.loadModel = function(model){
 
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
-  scale = ge.createScale('');
-  scale.setX(model.scale);
-  scale.setY(model.scale);
-  scale.setZ(model.scale);
-  me.model.setScale(scale);
+  if (model.scale) {
+    scale = ge.createScale('');
+    scale.setX(model.scale);
+    scale.setY(model.scale);
+    scale.setZ(model.scale);
+    me.model.setScale(scale);
+  }
 }
 
 Truck.prototype.nextFrame = function() {
