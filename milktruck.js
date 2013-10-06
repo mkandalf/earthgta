@@ -249,6 +249,7 @@ function loadAnimationModel(model, frame){
 Truck.prototype.loadModel = function(model){
   var me = this;
   me.data = model;
+  me.checking_road = false;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
   me.frame = 1;
@@ -633,6 +634,12 @@ Truck.prototype.update = function() {
   latLonBox.setRotation(-newhtr[0]);
 
   me.cameraFollow(dt, gpos, me.localFrame);
+
+  if (!me.checking_road){
+    me.checking_road = true;
+    console.log(lla);
+    check_points(me, lla[1], lla[0]);
+  }
 };
 
 
@@ -739,6 +746,27 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
   }
 };
 
+Truck.prototype.dropAt = function(lat, lon, heading) {
+  var me = this;
+  me.model.getLocation().setLatitude(lat);
+  me.model.getLocation().setLongitude(lon);
+  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 50.0);
+  if (heading == null) {
+    heading = 0;
+  }
+  me.vel = [0, 0, 0];
+
+  me.localAnchorLla = [lat, lon, 0];
+  me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
+  me.localFrame = M33.makeLocalToGlobalFrame(me.localAnchorLla);
+  me.modelFrame = M33.identity();
+  me.modelFrame[0] = V3.rotate(me.modelFrame[0], me.modelFrame[2], -heading);
+  me.modelFrame[1] = V3.rotate(me.modelFrame[1], me.modelFrame[2], -heading);
+  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon)];
+
+  me.cameraCut();
+};
+
 // Move our anchor closer to our current position.  Retain our global
 // motion state (position, orientation, velocity).
 Truck.prototype.adjustAnchor = function() {
@@ -781,21 +809,32 @@ function fixAngle(a) {
   return a;
 }
 
-function check_points(x, y){
+function float_cmp(a, b){
+  return Math.abs(a - b) < 0.00012;
+}
+function check_points(model, x, y){
+  //console.log('checking');
   google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(x, y));
+  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(model, x, y));
+  google.maps.Event.addListener(DS_directions, 'error', function() {model.checking_road = false;});
   //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
   DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
             {getSteps: true, getPolyline: true});
 }
-function DS_directionsLoaded(x, y){
+function DS_directionsLoaded(model, x, y){
   return function(){
-    if (x == DS_directions.getRoute(0).getStep(0).getLatLng().x 
-     && y == DS_directions.getRoute(0).getStep(0).getLatLng().y){
-       console.log('on road');
+    var new_x = DS_directions.getRoute(0).getStep(0).getLatLng().x ;
+    var new_y = DS_directions.getRoute(0).getStep(0).getLatLng().y;
+    if (float_cmp(x, new_x)
+     && float_cmp(y, new_y)){
+       //console.log('on road');
      }
     else {
-      console.log ('off road');
+      //console.log ('off road, moving...');
+      //console.log(x, y, new_x, new_y);
+      model.dropAt(new_y, new_x, 90);
+      model.vel = [0,0,0];
     }
+    model.checking_road = false;
   }
 }
