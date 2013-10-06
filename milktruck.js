@@ -25,6 +25,15 @@ model = 'car';
 
 var DS_map;
 var DS_directions;
+//var GTAref = new Firebase('https://gtavi.firebaseio.com/');
+var stars = 0;
+var original_car = null;
+var colliding = false;
+
+function set_stars(){
+  var starchars = Array(Math.min(6, stars+1)).join('★');
+  document.getElementById("stars").innerHTML = starchars;
+}
 
 var car = {
   type: 'car',
@@ -83,7 +92,7 @@ var person = {
   scale: 0.4,
   max_rev_speed: 0.0,
   max_speed: 5.0,
-  turn_speed:40,
+  turn_speed:60,
   steer_roll: 0.0,
   roll_spring: 0.0,
   roll_damp: -0.16,
@@ -137,7 +146,10 @@ var addObject = function(object){
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   
   object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
+  try {
+    object.linker.setHref(object.options.urls[0]);
+  } catch (e) {
+  }
   object.model.setLink(object.linker);
 
   object.placemark.setGeometry(object.model);
@@ -151,42 +163,45 @@ var addObject = function(object){
   object.model.setScale(scale);
 }
 
-function plotCars(lat1, lng1, lat2, lng2, self, cb) {
-  var route = "from: " + lat1 + ", " + lng1 + " to: " + lat2 + ", " + lng2;
-  console.log(route);
-
+function plotCars(lat1, lon1, lat2, lon2, self, cb) {
+  var route = "from: " + lat1 + ", " + lon1 + " to: " + lat2 + ", " + lon2;
   get_directions(route, function(data) {
     var steps = data.g.Directions.Routes[0].Steps;
     console.log(steps);
 
-    if (steps.length > 1) {
-      var s = steps[1];
-      var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
-      console.log(steps.map(function(s) { return {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]} }));
-      console.log("first step");
-      console.log(lng1, lat1);
-      console.log(p);
-      console.log("truck");
+    var i;
+    for (i = 0; i < steps.length - 1; i++){
+      var s1 = steps[i];
+      var s2 = steps[i + 1];
+      //var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
+      //console.log(steps.map(function(s) { return {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]} }));
+      //console.log("first step");
+      //console.log(lng1, lat1);
+      //console.log(p);
+      //console.log("truck");
 
-      var o = 6;
-      for (var i = 1; i < o; i++) {
-        (function() {
-          var p1 = V3.latLonAltToCartesian([lat1, lng1, 0]);
-          var p2 = V3.latLonAltToCartesian([p.lat, p.lng, 0]);
+      var p1 = V3.latLonAltToCartesian(s1.Point.coordinates);
+      var p2 = V3.latLonAltToCartesian(s2.Point.coordinates);
+      var dist = Math.sqrt(
+          Math.pow(p1[0] - p2[0], 2.0) +
+          Math.pow(p1[1] - p2[1], 2.0) +
+          Math.pow(p1[2] - p2[2], 2.0)
+      );
+      var o = dist / 100.0;
+      var s = V3.sub(p2, p1);
+      var n = V3.normalize(s);
+      console.log('num cars: ' + o);
+      for (var j = 0; j < Math.floor(o); j++) {
+        var v = V3.scale(n, j * dist / 100.0);
+        var m = V3.cartesianToLatLonAlt(V3.add(p1,v));
 
-          var s = V3.sub(p1, p2)
-          var n = V3.add(p1, V3.scale(V3.normalize(s), i))
-          var m = V3.cartesianToLatLonAlt(n);
-
-          console.log(m);
-          
-          // self.cars.push(new Truck({lat: lat1, lng: lng1}));
-          var car = new Truck({
-            lat: m[0],
-            lng: m[1]
-          });
-          self.cars.push(car);
-        })()
+        console.log(m);
+        
+        var car = new Truck({
+          lat: m[0],
+          lng: m[1]
+        });
+        self.cars.push(car);
       }
     }
       
@@ -195,7 +210,6 @@ function plotCars(lat1, lng1, lat2, lng2, self, cb) {
     }
   });
 }
-
 function Scene() {
   // initialize
   var self = this;
@@ -203,8 +217,11 @@ function Scene() {
   self.people = [];
   self.flashes = [];
 
+  self.users = {};
+
   self.player1 = new Truck();
   self.cars.push(self.player1);
+  original_car = self.player1;
 
   self.createCars();
   self.createPeople();
@@ -230,11 +247,9 @@ Scene.prototype.createCars = function() {
       lat: lat
     });
     self.cars.push(player3);
-
-
-    plotCars(lat, lng, lat + 0.005, lng, self, function() {});
         // plotCars(lat, lng, lat, lng + 0.005, self, function() {}));
 
+    //plotCars(lat - 0.005, lng, lat + 0.005, lng, self, function() {});
     break;
   }
 }
@@ -252,9 +267,10 @@ Scene.prototype.removeObject = function(object) {
   object.linker.setHref('');
   object.model.setLink(object.linker);
 }
-
 Scene.prototype.update = function() {
   var self = this;
+
+
   self.cars.forEach(function(c, i) {
     // if car is to far away move it
     c.update();
@@ -285,21 +301,20 @@ Scene.prototype.update = function() {
       for (i = 0; i < scene.cars.length; i++){
         car = scene.cars[i];
         dist = distance(scene.player1, car);
-        console.log(dist);
+        // console.log(dist);
         if (dist < 5.5){
           if (dist < closest_dist){
             closest_dist = dist;
             closest_car = car;
           }
-          //me_loc = me.model.getLocation();
-          //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
-          //car_loc = car.model.getLocation();
-          //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
-          //me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
         }
       }
       if (closest_car){
         ge.getFeatures().removeChild(self.player1.placemark);
+        //document.getElementById("violation").innerHTML = 'Car theft';
+        var gunSound = new Audio('CARSTART.mp3');
+        gunSound.play();
+        stars++;
         self.player1 = closest_car;
       }
     }
@@ -322,14 +337,33 @@ Scene.prototype.update = function() {
     muzzle_flash.options.heading = scene.player1.model.getOrientation().getHeading();
     muzzle_flash.frames_left = 2;
 
+    var gunSound = new Audio('GUNSHOT.WAV');
+    gunSound.play();
+    var glassSound = new Audio('GLASSBRK.WAV');
+    glassSound.play();
+    stars += 1;
+    //document.getElementById("violation").innerHTML = 'Discharge of weapon.';
+
+    //for (i = 0; i < scene.cars.length; i++){
+      //car = scene.cars[i];
+      //me_loc = scene.player1.model.getLocation();
+      //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+      //other_cart = V3.add(me_cart, V3.scale(V3.rotate([1,0,0], [0,0,1], scene.player1.model.getOrientation().getHeading() * Math.PI / 180), 1000));
+      //car_loc = car.model.getLocation();
+      //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+      //dist = V3.leftDistance(me_cart, other_cart, car_cart);
+      //console.log(me_cart, other_cart, car_cart);
+      //if (Math.abs(dist) < 10){
+      //}
+    //}
     self.addObject(muzzle_flash);
     self.flashes.push(muzzle_flash);
   }
 
 };
 
+
 Scene.prototype.addObject = function(object){
-  console.log(object);
   // adds an object to the scene
   object.id = Math.random().toString(36).slice(2);
   object.placemark = ge.createPlacemark(object.id);
@@ -339,7 +373,10 @@ Scene.prototype.addObject = function(object){
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   
   object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
+  try {
+    object.linker.setHref(object.options.urls[0]);
+  } catch (e) {
+  }
   object.model.setLink(object.linker);
 
   object.placemark.setGeometry(object.model);
@@ -479,7 +516,6 @@ Truck.prototype.nextFrame = function() {
 
 Truck.prototype.switchModel = function(url) {
   var me = this;
-  console.log(url);
   me.linker = ge.createLink('');
   me.linker.setHref(url);
   me.model.setLink(me.linker);
@@ -555,9 +591,12 @@ function keyDown(event) {
   } else if(event.keyCode == 32){
     shootButtonDown = true;
     event.returnValue = false;
+  } else if(event.keyCode == 81){
+    stopSiren();
+    event.returnValue = false;
   }
    else {
-    console.log(event.keyCode);
+    // console.log(event.keyCode);
     return true;
   }
   return false;
@@ -737,21 +776,37 @@ Truck.prototype.update = function() {
     }
   }
 
-  for (i = 0; i < scene.cars.length; i++){
-    car = scene.cars[i];
-    if (car !== me){
-      if (distance(me, car) < 3){
-        me_loc = me.model.getLocation();
-        me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
-        car_loc = car.model.getLocation();
-        car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
-        vec = V3.sub(me_cart, car_cart);
+  //for (i = 0; i < scene.cars.length; i++){
+    //car = scene.cars[i];
+    //var recently_collided;
+    //if (car === scene.player1 || me === scene.player1){
+      //recently_collided = false;
+    //}
+    //if (car !== me){
+      //if (distance(me, car) < 2){
+        //me_loc = me.model.getLocation();
+        //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+        //car_loc = car.model.getLocation();
+        //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+        //vec = V3.sub(me_cart, car_cart);
 
-        me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
-        console.log("Velocity: "+me.vel);
-      }
-    }
-  }
+        ////if (V3.length(me.vel) > 40){
+          //if (car === scene.player1 || (me === scene.player1 && me.data.type == 'car')){
+            //recently_collided = true;
+            //if (!colliding){
+              //stars += 1;
+              //colliding = true;
+              ////document.getElementById("violation").innerHTML = 'Destruction of property';
+            //}
+            //var crashSound = new Audio('CRASHLOUD.mp3');
+            //crashSound.play();
+          //}
+        ////}
+        //me.vel = V3.add(me.vel, V3.scale(vec, 2 * V3.length(me.vel) * dt));
+      //}
+    //}
+    //colliding = recently_collided;
+  //}
 
   me.modelFrame = M33.makeOrthonormalFrame(dir, up);
   right = me.modelFrame[0];
@@ -789,7 +844,7 @@ Truck.prototype.update = function() {
 
       me.vel = V3.sub(me.vel, V3.scale(veldir, drag * dt));
     }
-    if(!playingSiren && absSpeed > 20){
+    if(!playingSiren && absSpeed > 40){
       playSiren();
     }
   }
@@ -953,11 +1008,12 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
     heading = 0;
   }
   me.vel = [0, 0, 0];
-  var conditions = "";
-  jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; var conditions = parsed_json['current_observation']['weather']; alert("Current temperature in " + location + " is: " + conditions); } }); });
-  if (conditions.indexOf('rain')!=-1){
+  window.conditions = "";
+  jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; window.conditions = parsed_json['current_observation']['weather']; alert("Current temperature in " + location + " is: " + window.conditions); console.log("conditions: "+window.conditions);
+  if (window.conditions.indexOf("Rain")>=0){
     makeItRain();
-  }
+  }} }); });
+  
   me.localAnchorLla = [lat, lon, 0];
   me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
   me.localFrame = M33.makeLocalToGlobalFrame(me.localAnchorLla);
@@ -1097,7 +1153,7 @@ function makeItRain(){
                  $(this).fadeOut(200,function(){$(this).remove();$('.state').text($('.container .drop').length+' Drops');}); 
                });
   }
-  
+  playRain();
   function makeRain(){
     for(var i=0; i<30; i++){
       setTimeout(create,Math.random()*700);
@@ -1107,10 +1163,23 @@ function makeItRain(){
 }
 
 function playSiren() {
-  document.getElementById("forEmbed").innerHTML="<embed src='siren.wav' autostart=true loop=true volume=100 hidden=true>";
+  document.getElementById("forEmbed").innerHTML="<embed src='siren.wav' autostart=true loop=true volume=60 hidden=true>";
   playingSiren = true;
 }
 function stopSiren() {
   document.getElementById("forEmbed").remove();
+  playingSiren = false;
+}
+
+function playRain() {
+  if(document.getElementById("forEmbedRain").innerHTML="<embed src='RAIN.mp3' autostart=true loop=true volume=100 hidden=true>"){}
+  else{
+    document.appendChild("#forEmbedRain").innerHTML
+  }
+  playingSiren = true;
+  return true;
+}
+function stopRain() {
+  document.getElementById("forEmbedRain").remove();
   playingSiren = false;
 }

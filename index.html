@@ -4,6 +4,7 @@
   <title>GTA6</title>
   <link rel=stylesheet href='milktruck.css' type='text/css' />
   <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+  <script src='https://cdn.firebase.com/v0/firebase.js'></script>
   <script src="http://www.google.com/jsapi?key=ABQIAAAAwbkbZLyhsmTCWXbTcjbgbRSzHs7K5SvaUdm8ua-Xxy_-2dYwMxQMhnagaawTo7L1FE1-amhuQxIlXw"></script>
   <script type="text/javascript" src="./lib/math3d.js"></script>
   <script type="text/javascript" src="./lib/keyboard-focus-hack.js"></script>
@@ -21,6 +22,8 @@
     var ge = null;
     var geocoder;
     var scene;
+    var GTAref = new Firebase('https://mhacks.firebaseio.com/');
+    // var GTAref = new Firebase('https://gtavi.firebaseio.com/');
 
     function el(e) { return document.getElementById(e); }
 
@@ -39,11 +42,13 @@
       ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
       ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
       scene = new Scene();
+
       keyboardFocusHack(ge);
     }
 
     function failureCallback(err) {
       // This function will be called if plugin fails to load, in case you need to handle that error condition.
+      wasted();
     }
 
     function submitLocation() {
@@ -89,8 +94,12 @@
     <div class="container">
       <div class="drop"></drop>
     </div>
+    <div id='wasted'>
+    </div>
     <div id='stars'>
-      ★ ★ ★ ★ ★
+      ★ ★ ★ ★ 
+    </div>
+    <div id='violation'>
     </div>
     <div id='map3d'></div>
     <div id='teleport'>
@@ -109,6 +118,16 @@
     </div>
     <div id='map' style='display:none'></div>
     <div id="forEmbed" style="position: absolute;"></div>
+    <div id="forEmbedRain" style="position: absolute;"></div>
+    <script>
+      var wasted = function() {
+        document.getElementById('wasted').className = 'wasted';
+      }
+    </script>
   </body>
 </html>
-
+<script>
+(function(){
+  setInterval(set_stars, 50);
+})();
+  </script>
