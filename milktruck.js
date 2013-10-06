@@ -27,6 +27,7 @@ var DS_map;
 var DS_directions;
 
 var car = {
+  type: 'car',
   url: host + 'sport_car/models/sport_car',
   animated: false,
   accel: 30.0,
@@ -42,14 +43,16 @@ var car = {
 };
 
 var person = {
+  type: 'person',
   url: host + 'person/an',
   animated: true,
   steering: false,
   accel: 1000.0,
   decel: 8.0,
-  scale: 0.5,
+  scale: 0.4,
   max_rev_speed: 0.0,
   max_speed: 5.0,
+  turn_speed:40,
   steer_roll: 0.0,
   roll_spring: 0.0,
   roll_damp: -0.16,
@@ -57,13 +60,14 @@ var person = {
 };
 
 var muzzle_flash = {
+  type: 'muzzle_flash',
   animated: false,
   options: {
     urls: [host + 'muzzle_flash/models/muzzle_flash.dae'],
     lat: 0,
     long: 0,
     alt: 0,
-    scale: 0.1
+    scale: 0.08
   }
 };
 
@@ -93,6 +97,7 @@ var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
 
+<<<<<<< HEAD
 var addObject = function(object){
   object.placemark = ge.createPlacemark('');
   object.model = ge.createModel('');
@@ -166,6 +171,7 @@ function Scene() {
   var self = this;
   self.cars = [];
   self.people = [];
+  self.flashes = [];
 
   self.player1 = new Truck();
   self.cars.push(self.player1);
@@ -179,7 +185,7 @@ function Scene() {
 Scene.prototype.createCars = function() {
   console.log("createCars");
   var self = this;
-  while (self.cars.length < 20) {
+  while (self.cars.length < 2) {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
@@ -223,15 +229,78 @@ Scene.prototype.update = function() {
 
   self.people.forEach(function(p, i) {
     // if person is too far away, move him
+    p.update();
   });
+
+  var i;
+  for (i = self.flashes.length - 1; i>=0; i--){
+    self.flashes[i].frames_left -= 1;
+    if (self.flashes[i].frames_left <= 0){
+      ge.getFeatures().removeChild(self.flashes[i].placemark);
+      self.flashes.splice(i, 1);
+      //console.log(ge.getElementById(self.flashes[i].id));
+      //ge.getFeatures().removeChild(ge.getElementById(self.flashes[i].id));
+      //ge.getFeatures().removeChild(ge.getElementById('p' + self.flashes[i].id));
+    }
+  };
+
+  if (switchButtonDown){
+    switchButtonDown = false;
+    if (scene.player1.data.type == 'person'){
+      closest_dist = 100000000000000000000000000;
+      closest_car = null;
+      for (i = 0; i < scene.cars.length; i++){
+        car = scene.cars[i];
+        dist = distance(scene.player1, car);
+        console.log(dist);
+        if (dist < 5.5){
+          if (dist < closest_dist){
+            closest_dist = dist;
+            closest_car = car;
+          }
+          //me_loc = me.model.getLocation();
+          //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+          //car_loc = car.model.getLocation();
+          //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+          //me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
+        }
+      }
+      if (closest_car){
+        ge.getFeatures().removeChild(self.player1.placemark);
+        self.player1 = closest_car;
+      }
+    }
+    else if (scene.player1.data.type == 'car'){
+      var lat = self.player1.location.getLatitude();
+      var lng = self.player1.location.getLongitude();
+      self.player1 = new Truck({
+        lng: lng,
+        lat: lat + .00001
+      }, person);
+      self.people.push(self.player1);
+    }
+  }
+
+  if (shootButtonDown) {
+    shootButtonDown = false;
+    muzzle_flash.options.lat = scene.player1.location.getLatitude();
+    muzzle_flash.options.long = scene.player1.location.getLongitude();
+    muzzle_flash.options.alt = scene.player1.location.getAltitude() + 0.5;
+    muzzle_flash.options.heading = scene.player1.model.getOrientation().getHeading();
+    muzzle_flash.frames_left = 2;
+
+    self.addObject(muzzle_flash);
+    self.flashes.push(muzzle_flash);
+  }
 
 };
 
 Scene.prototype.addObject = function(object){
   console.log(object);
   // adds an object to the scene
-  object.placemark = ge.createPlacemark('');
-  object.model = ge.createModel('');
+  object.id = Math.random().toString(36).slice(2);
+  object.placemark = ge.createPlacemark(object.id);
+  object.model = ge.createModel('m' + object.id);
   
   ge.getFeatures().appendChild(object.placemark);
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
@@ -251,6 +320,11 @@ Scene.prototype.addObject = function(object){
     scale.setZ(object.options.scale);
     object.model.setScale(scale);
   }
+  var heading = 0;
+  if (object.options.heading){
+    heading = object.options.heading + 270;
+  }
+  object.model.getOrientation().setHeading(heading);
 }
 
 function distance(obj1, obj2){
@@ -265,7 +339,7 @@ function distance(obj1, obj2){
   );
 }
 
-function Truck(opts) {
+function Truck(opts, model) {
   var me = this;
   // We do all our motion relative to a local coordinate frame that is
   // anchored not too far from us.  In this frame, the x axis points
@@ -294,7 +368,12 @@ function Truck(opts) {
   ge.getOptions().setMouseNavigationEnabled(false);
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
-  me.loadModel(car);
+  if (model){
+    me.loadModel(model);
+  }
+  else {
+    me.loadModel(car);
+  }
 
   me.finishInit(opts);
 }
@@ -378,7 +457,11 @@ Truck.prototype.finishInit = function(opts) {
   var me = this;
 
   if (opts) {
-    me.teleportTo(opts.lat, opts.lng, INIT_LOC.heading);
+    var heading = INIT_LOC.heading;
+    if (opts.heading){
+      heading = opts.heading;
+    }
+    me.teleportTo(opts.lat, opts.lng, heading);
   } else {
     me.teleportTo(INIT_LOC.lat, INIT_LOC.lon, INIT_LOC.heading);
   }
@@ -481,30 +564,9 @@ function clamp(val, min, max) {
 Truck.prototype.update = function() {
   var me = this;
 
-  if (switchButtonDown){
-    ge.getFeatures().removeChild(ge.getFeatures().getLastChild());
-    if (model == 'car'){
-      me.loadModel(person);
-      model = 'person';
-    }
-    else {
-      me.loadModel(car);
-      model = 'car';
-    }
-    switchButtonDown = false;
-  }
 
   if (scene.player1 === me && gasButtonDown && me.data.animated){
     me.nextFrame();
-  }
-
-  if (shootButtonDown) {
-    muzzle_flash.options.lat = me.location.getLatitude();
-    muzzle_flash.options.long = me.location.getLongitude();
-    muzzle_flash.options.alt = me.location.getAltitude();
-    
-    addObject(muzzle_flash);
-    shootButtonDown = false;
   }
   var now = (new Date()).getTime();
   // dt is the delta-time since last tick, in seconds
@@ -584,7 +646,7 @@ Truck.prototype.update = function() {
       } else if (rightButtonDown) {
           n = -1;
       }
-      steerAngle = n * 25 * dt * Math.PI / 180;
+      steerAngle = n * me.data.turn_speed * dt * Math.PI / 180;
       right = V3.rotate(right, up, steerAngle); //head   
     }
   }
@@ -766,7 +828,7 @@ Truck.prototype.update = function() {
 
   if (scene.player1 === me && !me.checking_road) {
     me.checking_road = true;
-    // check_points(me, lla[1], lla[0]);
+    check_points(me, lla[1], lla[0]);
   }
 };
 
