@@ -9,60 +9,47 @@
   <script type="text/javascript" src="./lib/kmldomwalk.js"></script>
   <script type="text/javascript" src="milktruck.js"></script>
   <script type="text/javascript">
-google.load("earth", "1");
-google.load("maps", "2");
+    google.load("earth", "1");
+    google.load("maps", "2");
 
-var ge = null;
-var geocoder;
-var truck;
+    var ge = null;
+    var geocoder;
+    var truck;
 
-function el(e) { return document.getElementById(e); }
+    function el(e) { return document.getElementById(e); }
 
-function Sample(description, url) {
-  this.description = description;
-  this.url = url;
-  return this;
-}
+    function init() {
+      geocoder = new GClientGeocoder();
 
-var samples = [];
-
-function init() {
-  geocoder = new GClientGeocoder();
-
-  init3D();
-}
-
-function initCallback(object) {
-  ge = object;
-  ge.getWindow().setVisibility(true);
-  ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
-  ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
-  truck = new Truck(); keyboardFocusHack(ge); }
-
-function failureCallback(err) {
-  /***
-   * This function will be called if plugin fails to load, in case
-   * you need to handle that error condition.
-   ***/
-}
-
-function init3D() {
-  google.earth.createInstance("map3d", initCallback, failureCallback);
-}
-
-function submitLocation() {
-  doGeocode(el('address').value);
-}
-
-function doGeocode(address) {
-  geocoder.getLatLng(address, function(point) {
-    if (point) {
-      if (ge != null && truck != null) {
-        truck.teleportTo(point.y, point.x);
-      }
+      google.earth.createInstance("map3d", initCallback, failureCallback);
     }
-  });
-}
+
+    function initCallback(object) {
+      ge = object;
+      ge.getWindow().setVisibility(true);
+      ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
+      ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
+      truck = new Truck();
+      keyboardFocusHack(ge);
+    }
+
+    function failureCallback(err) {
+      // This function will be called if plugin fails to load, in case you need to handle that error condition.
+    }
+
+    function submitLocation() {
+      doGeocode(el('address').value);
+    }
+
+    function doGeocode(address) {
+      geocoder.getLatLng(address, function(point) {
+        if (point) {
+          if (ge != null && truck != null) {
+            truck.teleportTo(point.y, point.x);
+          }
+        }
+      });
+    }
 
   </script>
 </head>

@@ -24,7 +24,7 @@ host = 'http://localhost:8000/';
 model = 'car';
 
 var car = {
-  urls: [host + 'sport_car/models/sport_car.dae'],
+  url: host + 'sport_car/models/sport_car.dae',
   animated: false,
   accel: 50.0,
   decel: 80.0,
@@ -152,21 +152,21 @@ function Truck() {
   me.loadModel(car);
 
   me.finishInit();
-
-  //window.google.earth.fetchKml(ge, MODEL_URL,
-                               //function(obj) { me.finishInit(obj); });
 }
 
 Truck.prototype.loadModel = function(model){
   var me = this;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
+
   ge.getFeatures().appendChild(me.placemark);
   me.location = me.model.getLocation();
   me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
   me.linker = ge.createLink('');
-  me.linker.setHref(model.urls[0]);
+  me.linker.setHref(model.url);
   me.model.setLink(me.linker);
+
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
 }
@@ -175,29 +175,6 @@ Truck.prototype.loadModel = function(model){
 
 Truck.prototype.finishInit = function() {
   var me = this;
-
-  //walkKmlDom(kml, function() {
-    //if (this.getType() == 'KmlPlacemark' &&
-        //this.getGeometry() &&
-        //this.getGeometry().getType() == 'KmlModel')
-      //me.placemark = this;
-  //});
-
-  //me.model = me.placemark.getGeometry();
-  //me.orientation = me.model.getOrientation();
-  //me.location = me.model.getLocation();
-
-  //me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
-  //me.orientation.setHeading(90);
-  //me.model.setOrientation(me.orientation);
-
-  //ge.getFeatures().appendChild(me.placemark);
-
-  me.balloon = ge.createHtmlStringBalloon('');
-  me.balloon.setFeature(me.placemark);
-  me.balloon.setMaxWidth(350);
-  me.balloon.setForegroundColor(BALLOON_FG);
-  me.balloon.setBackgroundColor(BALLOON_BG);
 
   me.teleportTo(INIT_LOC.lat, INIT_LOC.lon, INIT_LOC.heading);
 
@@ -212,7 +189,7 @@ Truck.prototype.finishInit = function() {
   me.shadow.setAltitudeMode(ge.ALTITUDE_CLAMP_TO_SEA_FLOOR);
   me.shadow.getIcon().setHref(PAGE_PATH + 'shadowrect.png');
   me.shadow.setVisibility(true);
-  ge.getFeatures().appendChild(me.shadow);
+  // ge.getFeatures().appendChild(me.shadow);
 
   google.earth.addEventListener(ge, "frameend", function() { me.tick(); });
 
@@ -224,8 +201,8 @@ Truck.prototype.finishInit = function() {
   // If the user clicks on the Earth window, try to restore keyboard
   // focus back to the page.
   google.earth.addEventListener(ge.getWindow(), "mouseup", function(event) {
-      ge.getWindow().blur();
-    });
+    ge.getWindow().blur();
+  });
 }
 
 leftButtonDown = false;
@@ -552,76 +529,6 @@ function estimateGroundNormal(pos, frame) {
   var normal = V3.normalize([dx, dy, 2]);
   return normal;
 }
-
-// Decide when to open & close popup messages.
-Truck.prototype.tickPopups = function(dt) {
-  var me = this;
-  var speed = V3.length(me.vel);
-  if (me.popupTimer > 0) {
-    me.popupTimer -= dt;
-    me.idleTimer = 0;
-    me.fastTimer = 0;
-    if (me.popupTimer <= 0) {
-      me.popupTimer = 0;
-      ge.setBalloon(null);
-    }
-  } else {
-    if (speed < 20) {
-      me.idleTimer += dt;
-      if (me.idleTimer > 10.0) {
-        //me.showIdlePopup();
-      }
-      me.fastTimer = 0;
-    } else {
-      me.idleTimer = 0;
-      if (speed > 80) {
-        me.fastTimer += dt;
-        if (me.fastTimer > 7.0) {
-          me.showFastPopup();
-        }
-      } else {
-        me.fastTimer = 0;
-      }
-    }
-  }
-};
-
-var IDLE_MESSAGES = [
-    "Let's deliver some milk!",
-    "Hello?",
-    "Dude, <font color=red><i>step on it!</i></font>",
-    "I'm sitting here getting sour!",
-    "We got customers waiting!",
-    "Zzzzzzz",
-    "Sometimes I wish I worked for UPS."
-                     ];
-Truck.prototype.showIdlePopup = function() {
-  var me = this;
-  me.popupTimer = 2.0;
-  var rand = Math.random();
-  var index = Math.floor(rand * IDLE_MESSAGES.length)
-    % IDLE_MESSAGES.length;
-  var message = "<center>" + IDLE_MESSAGES[index] + "</center>";
-  me.balloon.setContentString(message);
-  ge.setBalloon(me.balloon);
-};
-
-var FAST_MESSAGES = [
-    "Whoah there, cowboy!",
-    "Wheeeeeeeeee!",
-    "<font size=+5 color=#8080FF>Creamy!</font>",
-    "Hey, we're hauling glass bottles here!"
-                     ];
-Truck.prototype.showFastPopup = function() {
-  var me = this;
-  me.popupTimer = 2.0;
-  var rand = Math.random();
-  var index = Math.floor(rand * FAST_MESSAGES.length)
-    % FAST_MESSAGES.length;
-  var message = "<center>" + FAST_MESSAGES[index] + "</center>";
-  me.balloon.setContentString(message);
-  ge.setBalloon(me.balloon);
-};
 
 Truck.prototype.scheduleTick = function() {
   var me = this;
