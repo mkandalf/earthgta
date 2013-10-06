@@ -189,7 +189,7 @@ Scene.prototype.update = function() {
         car = scene.cars[i];
         dist = distance(scene.player1, car);
         console.log(dist);
-        if (dist < 3.0){
+        if (dist < 5.5){
           if (dist < closest_dist){
             closest_dist = dist;
             closest_car = car;
@@ -202,7 +202,7 @@ Scene.prototype.update = function() {
         }
       }
       if (closest_car){
-        // destroy player
+        ge.getFeatures().removeChild(self.player1.placemark);
         self.player1 = closest_car;
       }
     }
@@ -391,7 +391,11 @@ Truck.prototype.finishInit = function(opts) {
   var me = this;
 
   if (opts) {
-    me.teleportTo(opts.lat, opts.lng, INIT_LOC.heading);
+    var heading = INIT_LOC.heading;
+    if (opts.heading){
+      heading = opts.heading;
+    }
+    me.teleportTo(opts.lat, opts.lng, heading);
   } else {
     me.teleportTo(INIT_LOC.lat, INIT_LOC.lon, INIT_LOC.heading);
   }
