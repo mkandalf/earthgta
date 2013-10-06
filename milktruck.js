@@ -128,7 +128,10 @@ function Scene() {
   self.cars = [];
   self.people = [];
 
-  self.player1 = new Truck();
+  self.player1 = new Truck({
+    lat: 37.421013267172974,
+    lng: -122.08530936333837
+  });
   self.cars.push(self.player1);
 
   self.createCars();
@@ -144,15 +147,15 @@ Scene.prototype.createCars = function() {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
-    route = "from: " + (lat - 0.005) + ", " + (lng) + " to: " + (lat + 0.005) + ", " + (lng);
-
     var player2 = new Truck({
       lng: lng,
       lat: lat+0.0001
     });
     self.cars.push(player2);
 
+    route = "from: " + (lat - 0.001) + ", " + (lng) + " to: " + (lat + 0.001) + ", " + (lng);
     mapRoute(route, function(data) {
+      console.log("once");
       // console.log(data);
       data.g.Directions.Routes[0].Steps.forEach(function(s, i) {
         var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
@@ -160,7 +163,29 @@ Scene.prototype.createCars = function() {
         var car = new Truck(p);
         self.cars.push(car);
       });
+
+      route = "from: " + (lat) + ", " + (lng - 0.001) + " to: " + (lat) + ", " + (lng + 0.001);
+      mapRoute(route, function(data) {
+        console.log("twice");
+        // console.log(data);
+        var steps = data.g.Directions.Routes[0].Steps
+        steps.forEach(function(s1, i) {
+          var s2 = steps[i+1];
+          if (!s2) return;
+          
+          var p1 = {lng: s1.Point.coordinates[0], lat: s1.Point.coordinates[1]};
+          var p2 = {lng: s2.Point.coordinates[0], lat: s2.Point.coordinates[1]};
+
+          console.log(p1);
+
+          var car = new Truck(p1);
+          self.cars.push(car);
+        });
+      });
+
     });
+
+
     break;
   }
 }
