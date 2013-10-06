@@ -60,16 +60,7 @@ var muzzle_flash = {
 };
 
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
-/*
-/*var MODEL_URL =
-  'http://sketchup.google.com/3dwarehouse/download?'
-  + 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
-  + 'fn=milktruck&ctyp=milktruck';*/
-//var MODEL_URL = "http://sketchup.google.com/3dwarehouse/download?mid=42134787c805fffe1ab9df4be75138d0&rtyp=zip&fn=sport_car&ctyp=other&prevstart=0&ts=1223354807000";
 var MODEL_URL = 'http://chrisdiamanti.com/walk/an1.dae';
-  //'http://sketchup.google.com/3dwarehouse/download?'
-  //+ 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
-  //+ 'fn=milktruck&ctyp=milktruck';
 var INIT_LOC = {
   lat: 37.423501,
   lon: -122.086744,
