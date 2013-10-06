@@ -4,6 +4,7 @@
   <title>GTA6</title>
   <link rel=stylesheet href='milktruck.css' type='text/css' />
   <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+  <script src='https://cdn.firebase.com/v0/firebase.js'></script>
   <script src="http://www.google.com/jsapi?key=ABQIAAAAwbkbZLyhsmTCWXbTcjbgbRSzHs7K5SvaUdm8ua-Xxy_-2dYwMxQMhnagaawTo7L1FE1-amhuQxIlXw"></script>
   <script type="text/javascript" src="./lib/math3d.js"></script>
   <script type="text/javascript" src="./lib/keyboard-focus-hack.js"></script>
@@ -18,6 +19,8 @@
     var ge = null;
     var geocoder;
     var scene;
+
+    var username = prompt("Enter a username:");
 
     function el(e) { return document.getElementById(e); }
 

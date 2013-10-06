@@ -25,6 +25,7 @@ model = 'car';
 
 var DS_map;
 var DS_directions;
+var GTAref = new Firebase('https://gtavi.firebaseio.com/');
 
 var car = {
   type: 'car',
@@ -203,6 +204,8 @@ function Scene() {
   self.people = [];
   self.flashes = [];
 
+  self.users = {};
+
   self.player1 = new Truck();
   self.cars.push(self.player1);
 
@@ -255,6 +258,18 @@ Scene.prototype.removeObject = function(object) {
 
 Scene.prototype.update = function() {
   var self = this;
+
+   GTAref.on('child_added', function(snapshot) {
+     var user = snapshot.val();
+     if (user.username !== username) {
+       if (self.users[self.username]) {
+         // move the user object
+       } else {
+         // instantiate a user object and draw it
+       }
+     }
+   });
+
   self.cars.forEach(function(c, i) {
     // if car is to far away move it
     c.update();
@@ -325,6 +340,11 @@ Scene.prototype.update = function() {
     self.addObject(muzzle_flash);
     self.flashes.push(muzzle_flash);
   }
+
+  GTAref.push({user: username,
+               lng: scene.player1.location.getLongitude(),
+               lat: scene.player1.location.getLatitude(),
+               alt: scene.player1.location.getAltitude()});
 
 };
 
