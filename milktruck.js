@@ -261,11 +261,27 @@ Scene.prototype.update = function() {
 
    GTAref.on('child_added', function(snapshot) {
      var user = snapshot.val();
-     if (user.username !== username) {
-       if (self.users[self.username]) {
+     // alert(user.username);
+     // console.log(user.username == username);
+     if (user.username != username) {
+       if (self.users[user.username]) {
          // move the user object
+         var object = self.users[user.username];
+         object.setLatLngAlt(user.lat, user.lng, user.alt);
        } else {
          // instantiate a user object and draw it
+         var object = {
+           type: user.type,
+           options: {
+            urls: [user.url],
+            lat: 0,
+            long: 0,
+            alt: 0,
+            scale: 1.0
+           }
+         };
+         self.addObject(object);
+         self.users[user.username] = object;
        }
      }
    });
@@ -341,15 +357,18 @@ Scene.prototype.update = function() {
     self.flashes.push(muzzle_flash);
   }
 
-  GTAref.push({user: username,
-               lng: scene.player1.location.getLongitude(),
-               lat: scene.player1.location.getLatitude(),
-               alt: scene.player1.location.getAltitude()});
+  if (username) {
+    GTAref.push({username: username,
+                 type: scene.player1.data.type,
+                 url: scene.player1.data.url,
+                 lng: scene.player1.location.getLongitude(),
+                 lat: scene.player1.location.getLatitude(),
+                 alt: scene.player1.location.getAltitude()});
+  }
 
 };
 
 Scene.prototype.addObject = function(object){
-  console.log(object);
   // adds an object to the scene
   object.id = Math.random().toString(36).slice(2);
   object.placemark = ge.createPlacemark(object.id);
