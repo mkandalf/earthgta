@@ -23,6 +23,9 @@ host = 'http://localhost:8000/';
 
 model = 'car';
 
+var DS_map;
+var DS_directions;
+
 var car = {
   url: host + 'sport_car/models/sport_car',
   animated: false,
@@ -776,4 +779,23 @@ function fixAngle(a) {
     a -= 360;
   }
   return a;
+}
+
+function check_points(x, y){
+  google.maps.Event.clearListeners(DS_directions, 'load');
+  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(x, y));
+  //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
+  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
+            {getSteps: true, getPolyline: true});
+}
+function DS_directionsLoaded(x, y){
+  return function(){
+    if (x == DS_directions.getRoute(0).getStep(0).getLatLng().x 
+     && y == DS_directions.getRoute(0).getStep(0).getLatLng().y){
+       console.log('on road');
+     }
+    else {
+      console.log ('off road');
+    }
+  }
 }

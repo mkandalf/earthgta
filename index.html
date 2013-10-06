@@ -8,6 +8,8 @@
   <script type="text/javascript" src="./lib/math3d.js"></script>
   <script type="text/javascript" src="./lib/keyboard-focus-hack.js"></script>
   <script type="text/javascript" src="./lib/kmldomwalk.js"></script>
+  <script type="text/javascript">
+  </script>
   <script type="text/javascript" src="milktruck.js"></script>
   <script type="text/javascript">
     google.load("earth", "1");
@@ -23,6 +25,8 @@
       geocoder = new GClientGeocoder();
 
       google.earth.createInstance("map3d", initCallback, failureCallback);
+      DS_map = new GMap2(document.getElementById('map'));
+      DS_directions = new google.maps.Directions(DS_map, null);
     }
 
     function initCallback(object) {
@@ -73,6 +77,7 @@
       <input type=button value="Tokyo" onclick="truck.teleportTo(35.668607,139.822026,180);"/>
       <input type=button value="Everest" onclick="truck.teleportTo(27.991283,86.924340,70);"/>
     </div>
+    <div id='map' style='display:none'></div>
   </body>
 </html>
 
