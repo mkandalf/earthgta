@@ -237,7 +237,7 @@ Scene.prototype.createCars = function() {
     var lng = self.player1.location.getLongitude();
 
     var player2 = new Truck({
-      lng: lng-0.0003,
+      lng: lng-0.0002,
       lat: lat+0.0001*Math.random()
     }, police);
     self.cars.push(player2);
