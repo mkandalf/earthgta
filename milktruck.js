@@ -24,10 +24,11 @@ host = 'http://localhost:8000/';
 model = 'car';
 
 var car = {
-  urls: [host + 'sport_car/models/sport_car.dae'],
+  url: host + 'sport_car/models/sport_car',
   animated: false,
   accel: 50.0,
   decel: 80.0,
+  scale: 1.0,
   max_rev_speed: 40.0,
   max_speed: 100.0,
   steer_roll: -1.0,
@@ -37,11 +38,12 @@ var car = {
 };
 
 var person = {
-  urls: [host + 'person/an1.dae'],
-  animated: false,
-  accel: 5.0,
+  url: host + 'person/an',
+  animated: true,
+  accel: 50.0,
   decel: 8.0,
-  max_rev_speed: 8.0,
+  scale: 0.5,
+  max_rev_speed: 0.0,
   max_speed: 5.0,
   steer_roll: 0.0,
   roll_spring: 0.0,
@@ -129,18 +131,71 @@ function Truck() {
                                //function(obj) { me.finishInit(obj); });
 }
 
-Truck.prototype.loadModel = function(model){
+function loadAnimationModel(model, frame){
   var me = this;
+  me.data = model;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
+  me.frame = 1;
   ge.getFeatures().appendChild(me.placemark);
   me.location = me.model.getLocation();
   me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   me.linker = ge.createLink('');
-  me.linker.setHref(model.urls[0]);
+  me.linker.setHref(model.url + frame + '.dae');
   me.model.setLink(me.linker);
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
+}
+
+Truck.prototype.loadModel = function(model){
+  var me = this;
+  me.data = model;
+  me.placemark = ge.createPlacemark('');
+  me.model = ge.createModel('');
+  me.frame = 1;
+  ge.getFeatures().appendChild(me.placemark);
+  me.location = me.model.getLocation();
+  me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  me.linker = ge.createLink('');
+  if (model.animated){
+    me.linker.setHref(model.url + '1.dae');
+    for (j = 1; j < 16; j++) {
+        window['an' + j] = new loadAnimationModel(model, j);
+    }
+  }
+  else {
+    me.linker.setHref(model.url + '.dae');
+  }
+  me.model.setLink(me.linker);
+  me.placemark.setGeometry(me.model);
+  me.orientation = me.model.getOrientation();
+  scale = ge.createScale('');
+  scale.setX(model.scale);
+  scale.setY(model.scale);
+  scale.setZ(model.scale);
+  me.model.setScale(scale);
+}
+
+Truck.prototype.nextFrame = function() {
+  var me = this;
+  if (me.frame >= 16){
+    me.frame = 1;
+  }
+  else {
+    me.frame += 1;
+  }
+  if (window['an' + me.frame] == undefined) {
+      window['an' + me.frame] = new loadAnimationModel(me.data, me.frame);
+  }
+  me.switchModel(me.data.url + me.frame + '.dae');
+}
+
+Truck.prototype.switchModel = function(url) {
+  var me = this;
+  console.log(url);
+  me.linker = ge.createLink('');
+  me.linker.setHref(url);
+  me.model.setLink(me.linker);
 }
 
 Truck.prototype.finishInit = function() {
@@ -182,7 +237,7 @@ Truck.prototype.finishInit = function() {
   me.shadow.setAltitudeMode(ge.ALTITUDE_CLAMP_TO_SEA_FLOOR);
   me.shadow.getIcon().setHref(PAGE_PATH + 'shadowrect.png');
   me.shadow.setVisibility(true);
-  ge.getFeatures().appendChild(me.shadow);
+  //ge.getFeatures().appendChild(me.shadow);
 
   google.earth.addEventListener(ge, "frameend", function() { me.tick(); });
 
@@ -202,7 +257,7 @@ leftButtonDown = false;
 rightButtonDown = false;
 gasButtonDown = false;
 reverseButtonDown = false;
-switchModel = false;
+switchButtonDown = false;
 
 function keyDown(event) {
   if (!event) {
@@ -221,7 +276,7 @@ function keyDown(event) {
     reverseButtonDown = true;
     event.returnValue = false;
   } else if(event.keyCode == 83){
-    switchModel = true;
+    switchButtonDown = true;
     event.returnValue = false;
   } else {
     return true;
@@ -261,7 +316,7 @@ function clamp(val, min, max) {
 Truck.prototype.tick = function() {
   var me = this;
 
-  if (switchModel){
+  if (switchButtonDown){
     ge.getFeatures().removeChild(ge.getFeatures().getLastChild());
     if (model == 'car'){
       me.loadModel(person);
@@ -271,7 +326,11 @@ Truck.prototype.tick = function() {
       me.loadModel(car);
       model = 'car';
     }
-    switchModel = false;
+    switchButtonDown = false;
+  }
+
+  if (gasButtonDown && me.data.animated){
+    me.nextFrame();
   }
 
   var now = (new Date()).getTime();
@@ -371,10 +430,12 @@ Truck.prototype.tick = function() {
     forwardSpeed = V3.dot(dir, me.vel);
     if (gasButtonDown) {
       // Accelerate forwards.
-      me.vel = V3.add(me.vel, V3.scale(dir, ACCEL * dt));
+      if (forwardSpeed < me.data.max_speed){
+        me.vel = V3.add(me.vel, V3.scale(dir, me.data.accel * dt));
+      }
     } else if (reverseButtonDown) {
-      if (forwardSpeed > -MAX_REVERSE_SPEED)
-        me.vel = V3.add(me.vel, V3.scale(dir, -DECEL * dt));
+      if (forwardSpeed > -me.data.max_rev_speed)
+        me.vel = V3.add(me.vel, V3.scale(dir, -me.data.decel * dt));
     }
   }
 
@@ -410,7 +471,7 @@ Truck.prototype.tick = function() {
   }
 
   // Gravity
-  me.vel[2] -= GRAVITY * dt;
+  me.vel[2] -= me.data.gravity * dt;
 
   // Move.
   var deltaPos = V3.scale(me.vel, dt);
@@ -457,9 +518,9 @@ Truck.prototype.tick = function() {
   // Compute roll according to steering.
   // TODO: this would be even more cool in 3d.
   var absRoll = newhtr[2];
-  me.rollSpeed += steerAngle * forwardSpeed * STEER_ROLL;
+  me.rollSpeed += steerAngle * forwardSpeed * me.data.steer_roll;
   // Spring back to center, with damping.
-  me.rollSpeed += (ROLL_SPRING * -me.roll + ROLL_DAMP * me.rollSpeed);
+  me.rollSpeed += (me.data.roll_spring * -me.roll + me.data.roll_damp * me.rollSpeed);
   me.roll += me.rollSpeed * dt;
   me.roll = clamp(me.roll, -30, 30);
   absRoll += me.roll;
