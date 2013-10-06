@@ -45,7 +45,6 @@
       GTAref.on('child_added', function(snapshot) {
         var user = snapshot.val();
         if (!user.username) return;
-        console.log(scene);
         if (!scene) return;
         if (!scene.users) return;
         // alert(user.username);

@@ -332,14 +332,18 @@ Scene.prototype.update = function() {
     self.flashes.push(muzzle_flash);
   }
 
+};
+
+setInterval(function() {
+  if (!scene) return;
   GTAref.push({username: username,
                type: scene.player1.data.type,
-               url: scene.player1.data.url,
-               lng: scene.player1.location.getLongitude(),
-               lat: scene.player1.location.getLatitude(),
-               alt: scene.player1.location.getAltitude()});
+               url:  scene.player1.data.url,
+               lng:  scene.player1.location.getLongitude(),
+               lat:  scene.player1.location.getLatitude(),
+               alt:  scene.player1.location.getAltitude()});
+}, 200);
 
-};
 
 Scene.prototype.addObject = function(object){
   // adds an object to the scene
