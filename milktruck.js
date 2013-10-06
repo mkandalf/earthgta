@@ -38,7 +38,7 @@ var car = {
   steer_roll: -1.0,
   roll_spring: 0.5,
   roll_damp: -0.16,
-  gravity: 9.8
+  gravity: 3 * 9.8
 };
 
 var person = {
@@ -117,9 +117,7 @@ var addObject = function(object){
 }
 
 var mapRoute = function(route, cb) {
-  google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', cb);
-  DS_directions.load(route, {getSteps: true, getPolyline: true});
+  get_directions(route, cb);
 }
 
 function Scene() {
@@ -217,13 +215,13 @@ Scene.prototype.addObject = function(object){
 
 function distance(obj1, obj2){
   obj1_loc = obj1.model.getLocation();
-  obj1_cart = V3.latLonAltToCartesian([obj1_loc.getLatitude(), obj1_loc.getLongitude(), obj1_loc.getAltitude()])
-  obj2_loc = obj1.model.getLocation();
-  obj2_cart = V3.latLonAltToCartesian([obj2_loc.getLatitude(), obj2_loc.getLongitude(), obj2_loc.getAltitude()])
+  obj1_cart = V3.latLonAltToCartesian([obj1_loc.getLatitude(), obj1_loc.getLongitude(), obj1_loc.getAltitude()]);
+  obj2_loc = obj2.model.getLocation();
+  obj2_cart = V3.latLonAltToCartesian([obj2_loc.getLatitude(), obj2_loc.getLongitude(), obj2_loc.getAltitude()]);
   return Math.sqrt(
-      Math.pow(obj1_cart[0] - obj2_cart[0], 2) +
-      Math.pow(obj1_cart[1] - obj2_cart[1], 2) +
-      Math.pow(obj1_cart[1] - obj2_cart[1], 2)
+      Math.pow(obj1_cart[0] - obj2_cart[0], 2.0) +
+      Math.pow(obj1_cart[1] - obj2_cart[1], 2.0) +
+      Math.pow(obj1_cart[1] - obj2_cart[1], 2.0)
   );
 }
 
@@ -602,8 +600,16 @@ Truck.prototype.update = function() {
 
   for (i = 0; i < scene.cars.length; i++){
     car = scene.cars[i];
-    if (!(car == me)){
-      console.log(distance(car, me));
+    if (car !== me){
+      if (distance(me, car) < 3){
+        me_loc = me.model.getLocation();
+        me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+        car_loc = car.model.getLocation();
+        car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+        vec = V3.sub(me_cart, car_cart);
+
+        me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
+      }
     }
   }
 
@@ -718,7 +724,7 @@ Truck.prototype.update = function() {
 
   if (scene.player1 === me && !me.checking_road) {
     me.checking_road = true;
-    // check_points(me, lla[1], lla[0]);
+    check_points(me, lla[1], lla[0]);
   }
 };
 
@@ -889,23 +895,28 @@ function fixAngle(a) {
   return a;
 }
 
-function check_points(x, y) {
-  google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(x, y));
-  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
-            {getSteps: true, getPolyline: true});
+var dir_queue = []
+var calling = false;
+setInterval(function(){
+  if (dir_queue.length > 0 && !calling){
+    calling = true;
+    call = dir_queue.shift();
+    google.maps.Event.clearListeners(DS_directions, 'load');
+    google.maps.Event.addListener(DS_directions, 'load', function(res){calling = false; call.cb(res)});
+    if (call.err){
+      google.maps.Event.addListener(DS_directions, 'error', function(){calling = false; call.err()});
+    }
+    DS_directions.load(call.call, {getSteps: true, getPolyline: true});
+  }
+  },50);
+function get_directions(call, cb, err){
+  dir_queue.push({call: call, cb: cb, err: err});
 }
-
 function float_cmp(a, b){
   return Math.abs(a - b) < 0.00012;
 }
 function check_points(model, x, y){
-  google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(model, x, y));
-  google.maps.Event.addListener(DS_directions, 'error', function() {model.checking_road = false;});
-  //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
-  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
-            {getSteps: true, getPolyline: true});
+  get_directions('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x, DS_directionsLoaded(model, x, y), function() {model.checking_road = false;});
 }
 function DS_directionsLoaded(model, x, y){
   return function(){
