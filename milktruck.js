@@ -208,6 +208,17 @@ Scene.prototype.addObject = function(object){
   }
 }
 
+function distance(obj1, obj2){
+  obj1_loc = obj1.model.getLocation();
+  obj1_cart = V3.latLonAltToCartesian([obj1_loc.getLatitude(), obj1_loc.getLongitude(), obj1_loc.getAltitude()])
+  obj2_loc = obj1.model.getLocation();
+  obj2_cart = V3.latLonAltToCartesian([obj2_loc.getLatitude(), obj2_loc.getLongitude(), obj2_loc.getAltitude()])
+  return Math.sqrt(
+      Math.pow(obj1_cart[0] - obj2_cart[0], 2) +
+      Math.pow(obj1_cart[1] - obj2_cart[1], 2) +
+      Math.pow(obj1_cart[1] - obj2_cart[1], 2)
+  );
+}
 
 function Truck() {
   var me = this;
@@ -577,6 +588,14 @@ Truck.prototype.update = function() {
       }
     }
   }
+
+  for (i = 0; i < scene.cars.length; i++){
+    car = scene.cars[i];
+    if (!(car == me)){
+      console.log(distance(car, me));
+    }
+  }
+
   me.modelFrame = M33.makeOrthonormalFrame(dir, up);
   right = me.modelFrame[0];
   dir = me.modelFrame[1];
