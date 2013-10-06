@@ -29,12 +29,12 @@ var DS_directions;
 var car = {
   url: host + 'sport_car/models/sport_car',
   animated: false,
-  accel: 50.0,
+  accel: 30.0,
   decel: 80.0,
   scale: 1.0,
   steering: true,
   max_rev_speed: 40.0,
-  max_speed: 100.0,
+  max_speed: 60.0,
   steer_roll: -1.0,
   roll_spring: 0.5,
   roll_damp: -0.16,
@@ -59,7 +59,7 @@ var person = {
 var muzzle_flash = {
   animated: false,
   options: {
-    urls: [host + 'muzzle_flash/models/muzzle_flash'],
+    urls: [host + 'muzzle_flash/models/muzzle_flash.dae'],
     lat: 0,
     long: 0,
     alt: 0,
@@ -798,7 +798,7 @@ Truck.prototype.dropAt = function(lat, lon, heading) {
   var me = this;
   me.model.getLocation().setLatitude(lat);
   me.model.getLocation().setLongitude(lon);
-  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 50.0);
+  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 8.0);
   if (heading == null) {
     heading = 0;
   }
@@ -810,7 +810,7 @@ Truck.prototype.dropAt = function(lat, lon, heading) {
   me.modelFrame = M33.identity();
   me.modelFrame[0] = V3.rotate(me.modelFrame[0], me.modelFrame[2], -heading);
   me.modelFrame[1] = V3.rotate(me.modelFrame[1], me.modelFrame[2], -heading);
-  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon)];
+  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon) + 8.0];
 
   me.cameraCut();
 };
