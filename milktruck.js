@@ -29,16 +29,16 @@ var DS_directions;
 var car = {
   url: host + 'sport_car/models/sport_car',
   animated: false,
-  accel: 50.0,
+  accel: 30.0,
   decel: 80.0,
   scale: 1.0,
   steering: true,
   max_rev_speed: 40.0,
-  max_speed: 100.0,
+  max_speed: 60.0,
   steer_roll: -1.0,
   roll_spring: 0.5,
   roll_damp: -0.16,
-  gravity: 9.8
+  gravity: 3 * 9.8
 };
 
 var person = {
@@ -59,7 +59,7 @@ var person = {
 var muzzle_flash = {
   animated: false,
   options: {
-    urls: [host + 'muzzle_flash/models/muzzle_flash'],
+    urls: [host + 'muzzle_flash/models/muzzle_flash.dae'],
     lat: 0,
     long: 0,
     alt: 0,
@@ -117,9 +117,7 @@ var addObject = function(object){
 }
 
 var mapRoute = function(route, cb) {
-  google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', cb);
-  DS_directions.load(route, {getSteps: true, getPolyline: true});
+  get_directions(route, cb);
 }
 
 function Scene() {
@@ -215,6 +213,17 @@ Scene.prototype.addObject = function(object){
   }
 }
 
+function distance(obj1, obj2){
+  obj1_loc = obj1.model.getLocation();
+  obj1_cart = V3.latLonAltToCartesian([obj1_loc.getLatitude(), obj1_loc.getLongitude(), obj1_loc.getAltitude()]);
+  obj2_loc = obj2.model.getLocation();
+  obj2_cart = V3.latLonAltToCartesian([obj2_loc.getLatitude(), obj2_loc.getLongitude(), obj2_loc.getAltitude()]);
+  return Math.sqrt(
+      Math.pow(obj1_cart[0] - obj2_cart[0], 2.0) +
+      Math.pow(obj1_cart[1] - obj2_cart[1], 2.0) +
+      Math.pow(obj1_cart[1] - obj2_cart[1], 2.0)
+  );
+}
 
 function Truck(opts) {
   var me = this;
@@ -588,6 +597,22 @@ Truck.prototype.update = function() {
       }
     }
   }
+
+  for (i = 0; i < scene.cars.length; i++){
+    car = scene.cars[i];
+    if (car !== me){
+      if (distance(me, car) < 3){
+        me_loc = me.model.getLocation();
+        me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+        car_loc = car.model.getLocation();
+        car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+        vec = V3.sub(me_cart, car_cart);
+
+        me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
+      }
+    }
+  }
+
   me.modelFrame = M33.makeOrthonormalFrame(dir, up);
   right = me.modelFrame[0];
   dir = me.modelFrame[1];
@@ -699,7 +724,7 @@ Truck.prototype.update = function() {
 
   if (scene.player1 === me && !me.checking_road) {
     me.checking_road = true;
-    // check_points(me, lla[1], lla[0]);
+    check_points(me, lla[1], lla[0]);
   }
 };
 
@@ -811,7 +836,7 @@ Truck.prototype.dropAt = function(lat, lon, heading) {
   var me = this;
   me.model.getLocation().setLatitude(lat);
   me.model.getLocation().setLongitude(lon);
-  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 50.0);
+  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 8.0);
   if (heading == null) {
     heading = 0;
   }
@@ -823,7 +848,7 @@ Truck.prototype.dropAt = function(lat, lon, heading) {
   me.modelFrame = M33.identity();
   me.modelFrame[0] = V3.rotate(me.modelFrame[0], me.modelFrame[2], -heading);
   me.modelFrame[1] = V3.rotate(me.modelFrame[1], me.modelFrame[2], -heading);
-  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon)];
+  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon) + 8.0];
 
   me.cameraCut();
 };
@@ -870,23 +895,28 @@ function fixAngle(a) {
   return a;
 }
 
-function check_points(x, y) {
-  google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(x, y));
-  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
-            {getSteps: true, getPolyline: true});
+var dir_queue = []
+var calling = false;
+setInterval(function(){
+  if (dir_queue.length > 0 && !calling){
+    calling = true;
+    call = dir_queue.shift();
+    google.maps.Event.clearListeners(DS_directions, 'load');
+    google.maps.Event.addListener(DS_directions, 'load', function(res){calling = false; call.cb(res)});
+    if (call.err){
+      google.maps.Event.addListener(DS_directions, 'error', function(){calling = false; call.err()});
+    }
+    DS_directions.load(call.call, {getSteps: true, getPolyline: true});
+  }
+  },50);
+function get_directions(call, cb, err){
+  dir_queue.push({call: call, cb: cb, err: err});
 }
-
 function float_cmp(a, b){
   return Math.abs(a - b) < 0.00012;
 }
 function check_points(model, x, y){
-  google.maps.Event.clearListeners(DS_directions, 'load');
-  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(model, x, y));
-  google.maps.Event.addListener(DS_directions, 'error', function() {model.checking_road = false;});
-  //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
-  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
-            {getSteps: true, getPolyline: true});
+  get_directions('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x, DS_directionsLoaded(model, x, y), function() {model.checking_road = false;});
 }
 function DS_directionsLoaded(model, x, y){
   return function(){
