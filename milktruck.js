@@ -80,8 +80,8 @@ var BALLOON_FG = '#000000';
 var BALLOON_BG = '#FFFFFF';
 
 var GRAVITY = 100;
-var CAM_HEIGHT = 8;
-var TRAILING_DISTANCE = 30;
+var CAM_HEIGHT = 8; // 8
+var TRAILING_DISTANCE = 30; // 30
 
 var ACCEL = 50.0;
 var DECEL = 80.0;
@@ -115,7 +115,9 @@ var addObject = function(object){
 }
 
 var mapRoute = function(route, cb) {
-
+  google.maps.Event.clearListeners(DS_directions, 'load');
+  google.maps.Event.addListener(DS_directions, 'load', cb);
+  DS_directions.load(route, {getSteps: true, getPolyline: true});
 }
 
 function Scene() {
@@ -139,19 +141,33 @@ Scene.prototype.createCars = function() {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
-    route = "";
+    route = "from: " + (lat - 0.005) + ", " + (lng) + " to: " + (lat + 0.005) + ", " + (lng);
+
+    var player2 = {
+      options: {
+        urls: [host + 'sport_car/models/sport_car.dae'],
+        long: lng,
+        lat: lat+0.0001,
+        alt: 5.981713471934199
+      }
+    };
+    self.addObject(player2);
+    self.cars.push(player2);
 
     mapRoute(route, function(data) {
-      var car = {
-        options: {
-          urls: [],
-          lat: 0,
-          long: 0,
-          alt: 0
-        }
-      }
-      self.addObject(car);
-      self.cars.push(car);
+      console.log(data);
+      data.g.Directions.Routes[0].Steps.forEach(function(s, i) {
+        var car = {
+          options: {
+            urls: [host + 'sport_car/models/sport_car.dae'],
+            long: s.Point.coordinates[0],
+            lat: s.Point.coordinates[1],
+            alt: ge.getGlobe().getGroundAltitude(lat, lng)
+          }
+        };
+        self.addObject(car);
+        self.cars.push(car);
+      });
     });
     break;
   }
@@ -182,6 +198,7 @@ Scene.prototype.update = function() {
 }
 
 Scene.prototype.addObject = function(object){
+  console.log(object);
   // adds an object to the scene
   object.placemark = ge.createPlacemark('');
   object.model = ge.createModel('');
@@ -792,14 +809,14 @@ function fixAngle(a) {
   return a;
 }
 
-function check_points(x, y){
+function check_points(x, y) {
   google.maps.Event.clearListeners(DS_directions, 'load');
   google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(x, y));
-  //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
   DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
             {getSteps: true, getPolyline: true});
 }
-function DS_directionsLoaded(x, y){
+
+function DS_directionsLoaded(x, y) {
   return function(){
     if (x == DS_directions.getRoute(0).getStep(0).getLatLng().x 
      && y == DS_directions.getRoute(0).getStep(0).getLatLng().y){
