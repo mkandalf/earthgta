@@ -82,8 +82,8 @@ var BALLOON_FG = '#000000';
 var BALLOON_BG = '#FFFFFF';
 
 var GRAVITY = 100;
-var CAM_HEIGHT = 8;
-var TRAILING_DISTANCE = 30;
+var CAM_HEIGHT = 8; // 8
+var TRAILING_DISTANCE = 30; // 30
 
 var ACCEL = 50.0;
 var DECEL = 80.0;
@@ -117,7 +117,9 @@ var addObject = function(object){
 }
 
 var mapRoute = function(route, cb) {
-
+  google.maps.Event.clearListeners(DS_directions, 'load');
+  google.maps.Event.addListener(DS_directions, 'load', cb);
+  DS_directions.load(route, {getSteps: true, getPolyline: true});
 }
 
 function Scene() {
@@ -127,6 +129,7 @@ function Scene() {
   self.people = [];
 
   self.player1 = new Truck();
+  self.cars.push(self.player1);
 
   self.createCars();
   self.createPeople();
@@ -141,19 +144,22 @@ Scene.prototype.createCars = function() {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
-    route = "";
+    route = "from: " + (lat - 0.005) + ", " + (lng) + " to: " + (lat + 0.005) + ", " + (lng);
+
+    var player2 = new Truck({
+      lng: lng,
+      lat: lat+0.0001
+    });
+    self.cars.push(player2);
 
     mapRoute(route, function(data) {
-      var car = {
-        options: {
-          urls: [],
-          lat: 0,
-          long: 0,
-          alt: 0
-        }
-      }
-      self.addObject(car);
-      self.cars.push(car);
+      // console.log(data);
+      data.g.Directions.Routes[0].Steps.forEach(function(s, i) {
+        var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
+        console.log(p);
+        var car = new Truck(p);
+        self.cars.push(car);
+      });
     });
     break;
   }
@@ -174,16 +180,17 @@ Scene.prototype.update = function() {
   var self = this;
   self.cars.forEach(function(c, i) {
     // if car is to far away move it
+    c.update();
   });
 
   self.people.forEach(function(p, i) {
     // if person is too far away, move him
   });
 
-  self.player1.update();
-}
+};
 
 Scene.prototype.addObject = function(object){
+  console.log(object);
   // adds an object to the scene
   object.placemark = ge.createPlacemark('');
   object.model = ge.createModel('');
@@ -220,7 +227,7 @@ function distance(obj1, obj2){
   );
 }
 
-function Truck() {
+function Truck(opts) {
   var me = this;
   // We do all our motion relative to a local coordinate frame that is
   // anchored not too far from us.  In this frame, the x axis points
@@ -251,7 +258,7 @@ function Truck() {
 
   me.loadModel(car);
 
-  me.finishInit();
+  me.finishInit(opts);
 }
 
 function loadAnimationModel(model, frame){
@@ -327,10 +334,14 @@ Truck.prototype.switchModel = function(url) {
 
 
 
-Truck.prototype.finishInit = function() {
+Truck.prototype.finishInit = function(opts) {
   var me = this;
 
-  me.teleportTo(INIT_LOC.lat, INIT_LOC.lon, INIT_LOC.heading);
+  if (opts) {
+    me.teleportTo(opts.lat, opts.lng, INIT_LOC.heading);
+  } else {
+    me.teleportTo(INIT_LOC.lat, INIT_LOC.lon, INIT_LOC.heading);
+  }
 
   me.lastMillis = (new Date()).getTime();
 
@@ -443,7 +454,7 @@ Truck.prototype.update = function() {
     switchButtonDown = false;
   }
 
-  if (gasButtonDown && me.data.animated){
+  if (scene.player1 === me && gasButtonDown && me.data.animated){
     me.nextFrame();
   }
 
@@ -489,7 +500,7 @@ Truck.prototype.update = function() {
   
   if (me.data.steering){
     // Steering.
-    if (leftButtonDown || rightButtonDown) {
+    if (scene.player1 === me && (leftButtonDown || rightButtonDown)) {
       var TURN_SPEED_MIN = 60.0;  // radians/sec
       var TURN_SPEED_MAX = 100.0;  // radians/sec
    
@@ -527,7 +538,7 @@ Truck.prototype.update = function() {
     }
   }
   else {
-    if (leftButtonDown || rightButtonDown){
+    if (scene.player1 === me && (leftButtonDown || rightButtonDown)){
       if (leftButtonDown) {
           n = 1;
       } else if (rightButtonDown) {
@@ -564,18 +575,18 @@ Truck.prototype.update = function() {
     // Apply engine/reverse accelerations.
     forwardSpeed = V3.dot(dir, me.vel);
     if (me.data.steering){
-      if (gasButtonDown) {
+      if (scene.player1 === me && gasButtonDown) {
         // Accelerate forwards.
         if (forwardSpeed < me.data.max_speed){
           me.vel = V3.add(me.vel, V3.scale(dir, me.data.accel * dt));
         }
-      } else if (reverseButtonDown) {
+      } else if (scene.player1 === me && reverseButtonDown) {
         if (forwardSpeed > -me.data.max_rev_speed)
           me.vel = V3.add(me.vel, V3.scale(dir, -me.data.decel * dt));
       }
     }
     else {
-      if (gasButtonDown) {
+      if (scene.player1 === me && gasButtonDown) {
           if (!airborne) {
               me.vel = [0, 0, 0];
           }
@@ -583,7 +594,7 @@ Truck.prototype.update = function() {
       } else if (!airborne) {
           me.vel = [0, 0, 0];
       }
-      else if (reverseButtonDown){
+      else if (scene.player1 === me && reverseButtonDown){
         me.vel = [0, 0, 0];
       }
     }
@@ -701,11 +712,13 @@ Truck.prototype.update = function() {
   latLonBox.setWest(lla[1] + radius);
   latLonBox.setRotation(-newhtr[0]);
 
-  me.cameraFollow(dt, gpos, me.localFrame);
+  if (scene.player1 === me) {
+    me.cameraFollow(dt, gpos, me.localFrame);
+  }
 
-  if (!me.checking_road){
+  if (scene.player1 === me && !me.checking_road) {
     me.checking_road = true;
-    check_points(me, lla[1], lla[0]);
+    // check_points(me, lla[1], lla[0]);
   }
 };
 
@@ -874,6 +887,13 @@ function fixAngle(a) {
     a -= 360;
   }
   return a;
+}
+
+function check_points(x, y) {
+  google.maps.Event.clearListeners(DS_directions, 'load');
+  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(x, y));
+  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
+            {getSteps: true, getPolyline: true});
 }
 
 function float_cmp(a, b){
