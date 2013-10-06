@@ -210,37 +210,6 @@ function plotCars(lat1, lon1, lat2, lon2, self, cb) {
     }
   });
 }
-
-//GTAref.on('child_added', function(snapshot) {
-  //var user = snapshot.val();
-  //if (!user.username) return;
-  //if (!scene) return;
-  //if (!scene.users) return;
-  //// alert(user.username);
-  //// console.log(user.username == username);
-  //if (user.username != username) {
-    //if (scene.users[user.username]) {
-      //// move the user object
-      //var object = scene.users[user.username];
-      //object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
-    //} else {
-      //// instantiate a user object and draw it
-      //var object = {
-        //type: user.type,
-        //options: {
-         //urls: [user.url],
-         //lat: user.lat,
-         //long: user.lng,
-         //alt: user.alt,
-         //scale: 1.0
-        //}
-      //};
-      //scene.addObject(object);
-      //scene.users[user.username] = object;
-    //}
-  //}
-//});
-
 function Scene() {
   // initialize
   var self = this;
@@ -391,16 +360,18 @@ Scene.prototype.update = function() {
     self.flashes.push(muzzle_flash);
   }
 
-  //if (username) {
-    //GTAref.push({username: username,
-                 //type: scene.player1.data.type,
-                 //url: scene.player1.data.url,
-                 //lng: scene.player1.location.getLongitude(),
-                 //lat: scene.player1.location.getLatitude(),
-                 //alt: scene.player1.location.getAltitude()});
-  //}
-
 };
+
+setInterval(function() {
+  if (!scene) return;
+  GTAref.push({username: username,
+               type: scene.player1.data.type,
+               url:  scene.player1.data.url,
+               lng:  scene.player1.location.getLongitude(),
+               lat:  scene.player1.location.getLatitude(),
+               alt:  scene.player1.location.getAltitude()});
+}, 200);
+
 
 Scene.prototype.addObject = function(object){
   // adds an object to the scene
