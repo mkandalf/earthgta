@@ -25,6 +25,7 @@ model = 'car';
 
 var DS_map;
 var DS_directions;
+var GTAref = new Firebase('https://gtavi.firebaseio.com/');
 
 var car = {
   type: 'car',
@@ -137,7 +138,10 @@ var addObject = function(object){
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   
   object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
+  try {
+    object.linker.setHref(object.options.urls[0]);
+  } catch (e) {
+  }
   object.model.setLink(object.linker);
 
   object.placemark.setGeometry(object.model);
@@ -199,12 +203,45 @@ function plotCars(lat1, lon1, lat2, lon2, self, cb) {
   });
 }
 
+GTAref.on('child_added', function(snapshot) {
+  var user = snapshot.val();
+  if (!user.username) return;
+  console.log(user.username);
+  if (!scene) return;
+  if (!scene.users) return;
+  // alert(user.username);
+  // console.log(user.username == username);
+  if (user.username != username) {
+    if (scene.users[user.username]) {
+      // move the user object
+      var object = scene.users[user.username];
+      object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+    } else {
+      // instantiate a user object and draw it
+      var object = {
+        type: user.type,
+        options: {
+         urls: [user.url],
+         lat: user.lat,
+         long: user.lng,
+         alt: user.alt,
+         scale: 1.0
+        }
+      };
+      scene.addObject(object);
+      scene.users[user.username] = object;
+    }
+  }
+});
+
 function Scene() {
   // initialize
   var self = this;
   self.cars = [];
   self.people = [];
   self.flashes = [];
+
+  self.users = {};
 
   self.player1 = new Truck();
   self.cars.push(self.player1);
@@ -253,9 +290,10 @@ Scene.prototype.removeObject = function(object) {
   object.linker.setHref('');
   object.model.setLink(object.linker);
 }
-
 Scene.prototype.update = function() {
   var self = this;
+
+
   self.cars.forEach(function(c, i) {
     // if car is to far away move it
     c.update();
@@ -286,7 +324,7 @@ Scene.prototype.update = function() {
       for (i = 0; i < scene.cars.length; i++){
         car = scene.cars[i];
         dist = distance(scene.player1, car);
-        console.log(dist);
+        // console.log(dist);
         if (dist < 5.5){
           if (dist < closest_dist){
             closest_dist = dist;
@@ -344,10 +382,18 @@ Scene.prototype.update = function() {
     self.flashes.push(muzzle_flash);
   }
 
+  if (username) {
+    GTAref.push({username: username,
+                 type: scene.player1.data.type,
+                 url: scene.player1.data.url,
+                 lng: scene.player1.location.getLongitude(),
+                 lat: scene.player1.location.getLatitude(),
+                 alt: scene.player1.location.getAltitude()});
+  }
+
 };
 
 Scene.prototype.addObject = function(object){
-  console.log(object);
   // adds an object to the scene
   object.id = Math.random().toString(36).slice(2);
   object.placemark = ge.createPlacemark(object.id);
@@ -357,7 +403,10 @@ Scene.prototype.addObject = function(object){
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   
   object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
+  try {
+    object.linker.setHref(object.options.urls[0]);
+  } catch (e) {
+  }
   object.model.setLink(object.linker);
 
   object.placemark.setGeometry(object.model);
@@ -574,7 +623,7 @@ function keyDown(event) {
     event.returnValue = false;
   }
    else {
-    console.log(event.keyCode);
+    // console.log(event.keyCode);
     return true;
   }
   return false;

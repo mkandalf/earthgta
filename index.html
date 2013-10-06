@@ -4,6 +4,7 @@
   <title>GTA6</title>
   <link rel=stylesheet href='milktruck.css' type='text/css' />
   <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+  <script src='https://cdn.firebase.com/v0/firebase.js'></script>
   <script src="http://www.google.com/jsapi?key=ABQIAAAAwbkbZLyhsmTCWXbTcjbgbRSzHs7K5SvaUdm8ua-Xxy_-2dYwMxQMhnagaawTo7L1FE1-amhuQxIlXw"></script>
   <script type="text/javascript" src="./lib/math3d.js"></script>
   <script type="text/javascript" src="./lib/keyboard-focus-hack.js"></script>
@@ -18,6 +19,9 @@
     var ge = null;
     var geocoder;
     var scene;
+    var GTAref = new Firebase('https://gtavi.firebaseio.com/');
+
+    username = prompt("Enter a username:");
 
     function el(e) { return document.getElementById(e); }
 
@@ -36,6 +40,38 @@
       ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
       ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
       scene = new Scene();
+
+      GTAref.on('child_added', function(snapshot) {
+        var user = snapshot.val();
+        if (!user.username) return;
+        console.log(scene);
+        if (!scene) return;
+        if (!scene.users) return;
+        // alert(user.username);
+        // console.log(user.username == username);
+        if (user.username != username) {
+          if (scene.users[user.username]) {
+            // move the user object
+            var object = scene.users[user.username];
+            object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+          } else {
+            // instantiate a user object and draw it
+            var object = {
+              type: user.type,
+              options: {
+               urls: [user.url],
+               lat: user.lat,
+               long: user.lng,
+               alt: user.alt,
+               scale: 1.0
+              }
+            };
+            scene.addObject(object);
+            scene.users[user.username] = object;
+          }
+        }
+      });
+
       keyboardFocusHack(ge);
     }
 
