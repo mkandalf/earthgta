@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+   <asset>
+      <contributor>
+         <authoring_tool>Google SketchUp 6.0.515</authoring_tool>
+      </contributor>
+      <created>2007-10-21T14:12:46Z</created>
+      <modified>2007-10-21T14:12:46Z</modified>
+      <unit name="millimeters" meter="0.001"/>
+      <up_axis>Z_UP</up_axis>
+   </asset>
+   <library_images>
+      <image id="LRflash1-image" name="LRflash1-image">
+         <init_from>../images/LRflash1.png</init_from>
+      </image>
+      <image id="LRflash0002-image" name="LRflash0002-image">
+         <init_from>../images/LRflash0002.png</init_from>
+      </image>
+   </library_images>
+   <library_materials>
+      <material id="LRflash1ID" name="LRflash1">
+         <instance_effect url="#LRflash1-effect"/>
+      </material>
+      <material id="LRflash0002ID" name="LRflash0002">
+         <instance_effect url="#LRflash0002-effect"/>
+      </material>
+   </library_materials>
+   <library_effects>
+      <effect id="LRflash1-effect" name="LRflash1-effect">
+         <profile_COMMON>
+            <newparam sid="LRflash1-image-surface">
+               <surface type="2D">
+                  <init_from>LRflash1-image</init_from>
+               </surface>
+            </newparam>
+            <newparam sid="LRflash1-image-sampler">
+               <sampler2D>
+                  <source>LRflash1-image-surface</source>
+               </sampler2D>
+            </newparam>
+            <technique sid="COMMON">
+               <phong>
+                  <emission>
+                     <color>0.000000 0.000000 0.000000 1</color>
+                  </emission>
+                  <ambient>
+                     <color>0.000000 0.000000 0.000000 1</color>
+                  </ambient>
+                  <diffuse>
+                     <texture texture="LRflash1-image-sampler" texcoord="UVSET0"/>
+                  </diffuse>
+                  <specular>
+                     <color>0.330000 0.330000 0.330000 1</color>
+                  </specular>
+                  <shininess>
+                     <float>20.000000</float>
+                  </shininess>
+                  <reflectivity>
+                     <float>0.100000</float>
+                  </reflectivity>
+                  <transparent>
+                     <color>1 1 1 1</color>
+                  </transparent>
+                  <transparency>
+                     <float>0.000000</float>
+                  </transparency>
+               </phong>
+            </technique>
+         </profile_COMMON>
+      </effect>
+      <effect id="LRflash0002-effect" name="LRflash0002-effect">
+         <profile_COMMON>
+            <newparam sid="LRflash0002-image-surface">
+               <surface type="2D">
+                  <init_from>LRflash0002-image</init_from>
+               </surface>
+            </newparam>
+            <newparam sid="LRflash0002-image-sampler">
+               <sampler2D>
+                  <source>LRflash0002-image-surface</source>
+               </sampler2D>
+            </newparam>
+            <technique sid="COMMON">
+               <phong>
+                  <emission>
+                     <color>0.000000 0.000000 0.000000 1</color>
+                  </emission>
+                  <ambient>
+                     <color>0.000000 0.000000 0.000000 1</color>
+                  </ambient>
+                  <diffuse>
+                     <texture texture="LRflash0002-image-sampler" texcoord="UVSET0"/>
+                  </diffuse>
+                  <specular>
+                     <color>0.330000 0.330000 0.330000 1</color>
+                  </specular>
+                  <shininess>
+                     <float>20.000000</float>
+                  </shininess>
+                  <reflectivity>
+                     <float>0.100000</float>
+                  </reflectivity>
+                  <transparent>
+                     <texture texture="LRflash0002-image-sampler" texcoord="UVSET0"/>
+                  </transparent>
+                  <transparency>
+                     <float>0.380000</float>
+                  </transparency>
+               </phong>
+            </technique>
+         </profile_COMMON>
+      </effect>
+   </library_effects>
+   <library_geometries>
+      <geometry id="mesh1-geometry" name="mesh1-geometry">
+         <mesh>
+            <source id="mesh1-geometry-position">
+               <float_array id="mesh1-geometry-position-array" count="12">-13234.627818 11418.632531 6265.579410 -13234.627818 739.752746 9694.192619 22431.572572 11418.632531 6265.579410 22431.572572 739.752746 9694.192619 </float_array>
+               <technique_common>
+                  <accessor source="#mesh1-geometry-position-array" count="4" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh1-geometry-normal">
+               <float_array id="mesh1-geometry-normal-array" count="6">0.000000 0.305695 0.952129 0.000000 -0.305695 -0.952129 </float_array>
+               <technique_common>
+                  <accessor source="#mesh1-geometry-normal-array" count="2" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh1-geometry-uv">
+               <float_array id="mesh1-geometry-uv-array" count="8">0.000000 0.000000 0.000000 1.000000 1.000000 0.000000 1.000000 1.000000 </float_array>
+               <technique_common>
+                  <accessor source="#mesh1-geometry-uv-array" count="4" stride="2">
+                     <param name="S" type="float"/>
+                     <param name="T" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <vertices id="mesh1-geometry-vertex">
+               <input semantic="POSITION" source="#mesh1-geometry-position"/>
+            </vertices>
+            <triangles material="LRflash1" count="4">
+               <input semantic="VERTEX" source="#mesh1-geometry-vertex" offset="0"/>
+               <input semantic="NORMAL" source="#mesh1-geometry-normal" offset="1"/>
+               <input semantic="TEXCOORD" source="#mesh1-geometry-uv" offset="2" set="0"/>
+               <p>0 0 0 1 0 1 2 0 2 2 1 2 1 1 1 0 1 0 3 0 3 2 0 2 1 0 1 1 1 1 2 1 2 3 1 3 </p>
+            </triangles>
+         </mesh>
+      </geometry>
+      <geometry id="mesh2-geometry" name="mesh2-geometry">
+         <mesh>
+            <source id="mesh2-geometry-position">
+               <float_array id="mesh2-geometry-position-array" count="12">-13234.627818 472.955165 5518.919819 -13234.627818 10742.831122 10027.080181 22431.572572 472.955165 5518.919819 22431.572572 10742.831122 10027.080181 </float_array>
+               <technique_common>
+                  <accessor source="#mesh2-geometry-position-array" count="4" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh2-geometry-normal">
+               <float_array id="mesh2-geometry-normal-array" count="6">0.000000 0.401948 -0.915663 0.000000 -0.401948 0.915663 </float_array>
+               <technique_common>
+                  <accessor source="#mesh2-geometry-normal-array" count="2" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh2-geometry-uv">
+               <float_array id="mesh2-geometry-uv-array" count="8">0.000000 0.000000 0.000000 1.000000 1.000000 0.000000 1.000000 1.000000 </float_array>
+               <technique_common>
+                  <accessor source="#mesh2-geometry-uv-array" count="4" stride="2">
+                     <param name="S" type="float"/>
+                     <param name="T" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <vertices id="mesh2-geometry-vertex">
+               <input semantic="POSITION" source="#mesh2-geometry-position"/>
+            </vertices>
+            <triangles material="LRflash0002" count="4">
+               <input semantic="VERTEX" source="#mesh2-geometry-vertex" offset="0"/>
+               <input semantic="NORMAL" source="#mesh2-geometry-normal" offset="1"/>
+               <input semantic="TEXCOORD" source="#mesh2-geometry-uv" offset="2" set="0"/>
+               <p>0 0 0 1 0 1 2 0 2 2 1 2 1 1 1 0 1 0 3 0 3 2 0 2 1 0 1 1 1 1 2 1 2 3 1 3 </p>
+            </triangles>
+         </mesh>
+      </geometry>
+      <geometry id="mesh3-geometry" name="mesh3-geometry">
+         <mesh>
+            <source id="mesh3-geometry-position">
+               <float_array id="mesh3-geometry-position-array" count="12">22431.572572 4207.542004 2150.376847 -13234.627818 4207.542004 2150.376847 22431.572572 7636.155213 12829.256633 -13234.627818 7636.155213 12829.256633 </float_array>
+               <technique_common>
+                  <accessor source="#mesh3-geometry-position-array" count="4" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh3-geometry-normal">
+               <float_array id="mesh3-geometry-normal-array" count="6">0.000000 0.952129 -0.305695 0.000000 -0.952129 0.305695 </float_array>
+               <technique_common>
+                  <accessor source="#mesh3-geometry-normal-array" count="2" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh3-geometry-uv">
+               <float_array id="mesh3-geometry-uv-array" count="8">1.000000 -0.000000 0.000000 -0.000000 1.000000 1.000000 0.000000 1.000000 </float_array>
+               <technique_common>
+                  <accessor source="#mesh3-geometry-uv-array" count="4" stride="2">
+                     <param name="S" type="float"/>
+                     <param name="T" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <vertices id="mesh3-geometry-vertex">
+               <input semantic="POSITION" source="#mesh3-geometry-position"/>
+            </vertices>
+            <triangles material="LRflash1" count="4">
+               <input semantic="VERTEX" source="#mesh3-geometry-vertex" offset="0"/>
+               <input semantic="NORMAL" source="#mesh3-geometry-normal" offset="1"/>
+               <input semantic="TEXCOORD" source="#mesh3-geometry-uv" offset="2" set="0"/>
+               <p>0 0 0 1 0 1 2 0 2 2 1 2 1 1 1 0 1 0 3 0 3 2 0 2 1 0 1 1 1 1 2 1 2 3 1 3 </p>
+            </triangles>
+         </mesh>
+      </geometry>
+      <geometry id="mesh4-geometry" name="mesh4-geometry">
+         <mesh>
+            <source id="mesh4-geometry-position">
+               <float_array id="mesh4-geometry-position-array" count="12">22431.572572 8333.272819 2844.948036 -13234.627818 8333.272819 2844.948036 22431.572572 3825.112458 13114.823993 -13234.627818 3825.112458 13114.823993 </float_array>
+               <technique_common>
+                  <accessor source="#mesh4-geometry-position-array" count="4" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh4-geometry-normal">
+               <float_array id="mesh4-geometry-normal-array" count="6">0.000000 0.915663 0.401948 0.000000 -0.915663 -0.401948 </float_array>
+               <technique_common>
+                  <accessor source="#mesh4-geometry-normal-array" count="2" stride="3">
+                     <param name="X" type="float"/>
+                     <param name="Y" type="float"/>
+                     <param name="Z" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <source id="mesh4-geometry-uv">
+               <float_array id="mesh4-geometry-uv-array" count="8">1.000000 -0.000000 0.000000 -0.000000 1.000000 1.000000 0.000000 1.000000 </float_array>
+               <technique_common>
+                  <accessor source="#mesh4-geometry-uv-array" count="4" stride="2">
+                     <param name="S" type="float"/>
+                     <param name="T" type="float"/>
+                  </accessor>
+               </technique_common>
+            </source>
+            <vertices id="mesh4-geometry-vertex">
+               <input semantic="POSITION" source="#mesh4-geometry-position"/>
+            </vertices>
+            <triangles material="LRflash0002" count="4">
+               <input semantic="VERTEX" source="#mesh4-geometry-vertex" offset="0"/>
+               <input semantic="NORMAL" source="#mesh4-geometry-normal" offset="1"/>
+               <input semantic="TEXCOORD" source="#mesh4-geometry-uv" offset="2" set="0"/>
+               <p>0 0 0 1 0 1 2 0 2 2 1 2 1 1 1 0 1 0 3 0 3 2 0 2 1 0 1 1 1 1 2 1 2 3 1 3 </p>
+            </triangles>
+         </mesh>
+      </geometry>
+   </library_geometries>
+   <library_cameras>
+      <camera id="Camera-camera" name="Camera-camera">
+         <optics>
+            <technique_common>
+               <perspective>
+                  <xfov>46.666667</xfov>
+                  <yfov>35.000000</yfov>
+                  <znear>25.400000</znear>
+                  <zfar>25400.000000</zfar>
+               </perspective>
+            </technique_common>
+         </optics>
+      </camera>
+   </library_cameras>
+   <library_visual_scenes>
+      <visual_scene id="SketchUpScene" name="SketchUpScene">
+         <node id="Model" name="Model">
+            <node id="Group1" name="Group1">
+               <node id="mesh1" name="mesh1">
+                  <instance_geometry url="#mesh1-geometry">
+                     <bind_material>
+                        <technique_common>
+                           <instance_material symbol="LRflash1" target="#LRflash1ID">
+                              <bind_vertex_input semantic="UVSET0" input_semantic="TEXCOORD" input_set="0"/>
+                           </instance_material>
+                        </technique_common>
+                     </bind_material>
+                  </instance_geometry>
+               </node>
+               <node id="mesh2" name="mesh2">
+                  <instance_geometry url="#mesh2-geometry">
+                     <bind_material>
+                        <technique_common>
+                           <instance_material symbol="LRflash0002" target="#LRflash0002ID">
+                              <bind_vertex_input semantic="UVSET0" input_semantic="TEXCOORD" input_set="0"/>
+                           </instance_material>
+                        </technique_common>
+                     </bind_material>
+                  </instance_geometry>
+               </node>
+               <node id="mesh3" name="mesh3">
+                  <instance_geometry url="#mesh3-geometry">
+                     <bind_material>
+                        <technique_common>
+                           <instance_material symbol="LRflash1" target="#LRflash1ID">
+                              <bind_vertex_input semantic="UVSET0" input_semantic="TEXCOORD" input_set="0"/>
+                           </instance_material>
+                        </technique_common>
+                     </bind_material>
+                  </instance_geometry>
+               </node>
+               <node id="mesh4" name="mesh4">
+                  <instance_geometry url="#mesh4-geometry">
+                     <bind_material>
+                        <technique_common>
+                           <instance_material symbol="LRflash0002" target="#LRflash0002ID">
+                              <bind_vertex_input semantic="UVSET0" input_semantic="TEXCOORD" input_set="0"/>
+                           </instance_material>
+                        </technique_common>
+                     </bind_material>
+                  </instance_geometry>
+               </node>
+            </node>
+         </node>
+         <node id="Camera" name="Camera">
+            <matrix>
+               -0.449333 -0.364528 0.815610 21797.969886
+               0.893365 -0.183345 0.410225 13333.475587
+               -0.000000 0.912964 0.408039 15175.761870
+               0.000000 0.000000 0.000000 1.000000
+            </matrix>
+            <instance_camera url="#Camera-camera"/>
+         </node>
+      </visual_scene>
+   </library_visual_scenes>
+   <scene>
+      <instance_visual_scene url="#SketchUpScene"/>
+   </scene>
+</COLLADA>

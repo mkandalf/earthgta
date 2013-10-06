@@ -5,7 +5,18 @@ body {
 
 #map3d {
   height: 500px;
+  z-index: -1;
 }
 
 #teleport {
+}
+
+#stars {
+  color: #eee;
+  pointer-events: none;
+  z-index: 1;
+  font-size: 30pt;
+  position: absolute;
+  right: 0;
+  top: 0;
 }

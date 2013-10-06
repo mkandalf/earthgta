@@ -51,17 +51,19 @@ var person = {
   gravity: 50
 };
 
+var muzzle_flash = {
+  animated: false,
+  options: {
+    urls: [host + 'muzzle_flash/models/muzzle_flash'],
+    lat: 0,
+    long: 0,
+    alt: 0,
+    scale: 0.1
+  }
+};
+
 var PAGE_PATH = document.location.href.replace(/\/[^\/]+$/, '/');
-/*
-/*var MODEL_URL =
-  'http://sketchup.google.com/3dwarehouse/download?'
-  + 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
-  + 'fn=milktruck&ctyp=milktruck';*/
-//var MODEL_URL = "http://sketchup.google.com/3dwarehouse/download?mid=42134787c805fffe1ab9df4be75138d0&rtyp=zip&fn=sport_car&ctyp=other&prevstart=0&ts=1223354807000";
 var MODEL_URL = 'http://chrisdiamanti.com/walk/an1.dae';
-  //'http://sketchup.google.com/3dwarehouse/download?'
-  //+ 'mid=3c9a1cac8c73c61b6284d71745f1efa9&rtyp=zip&'
-  //+ 'fn=milktruck&ctyp=milktruck';
 var INIT_LOC = {
   lat: 37.423501,
   lon: -122.086744,
@@ -86,12 +88,113 @@ var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
 
+var addObject = function(object){
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt);
+  scale = ge.createScale('');
+  scale.setX(object.options.scale);
+  scale.setY(object.options.scale);
+  scale.setZ(object.options.scale);
+  object.model.setScale(scale);
+}
+
+/*
+ * Scene
+ * an array of cars
+ * an array of people
+ * and player1
+ *
+ * addObject
+ * removeObject
+ *
+ * update - update all objects
+ */
+
+function Scene() {
+  // initialize
+  var self = this;
+  self.cars = [];
+  self.people = [];
+
+  self.player1 = new Truck();
+
+  self.initCars();
+  self.initPeople();
+
+  google.earth.addEventListener(ge, "frameend", function() { self.update(); });
+}
+
+Scene.prototype.initCars = function() {
+  console.log("initCars");
+  var self = this;
+  // while (self.cars.length < 20) {
+  // }
+}
+
+Scene.prototype.initPeople = function() {
+  console.log("initPeople");
+  var self = this;
+  // while (self.people.length < 20) {
+  // }
+}
+
+Scene.prototype.addObject = function(object){
+  // adds an object to the scene
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt);
+  scale = ge.createScale('');
+  scale.setX(object.options.scale);
+  scale.setY(object.options.scale);
+  scale.setZ(object.options.scale);
+  object.model.setScale(scale);
+}
+
+Scene.prototype.removeObject = function(object) {
+  // removes an object
+}
+
+Scene.prototype.update = function() {
+  var self = this;
+  self.cars.forEach(function(c, i) {
+    // if car is to far away move it
+  });
+
+  self.people.forEach(function(p, i) {
+    // if person is too far away, move him
+  });
+
+  self.player1.update();
+}
+
 
 function Truck() {
   var me = this;
-
-  me.doTick = true;
-  
   // We do all our motion relative to a local coordinate frame that is
   // anchored not too far from us.  In this frame, the x axis points
   // east, the y axis points north, and the z axis points straight up
@@ -102,17 +205,13 @@ function Truck() {
   me.localAnchorLla = [0, 0, 0];
   me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
   me.localFrame = M33.identity();
-
   // Position, in local cartesian coords.
   me.pos = [0, 0, 0];
-  
   // Velocity, in local cartesian coords.
   me.vel = [0, 0, 0];
-
   // Orientation matrix, transforming model-relative coords into local
   // coords.
   me.modelFrame = M33.identity();
-
   me.roll = 0;
   me.rollSpeed = 0;
   
@@ -126,9 +225,6 @@ function Truck() {
   me.loadModel(car);
 
   me.finishInit();
-
-  //window.google.earth.fetchKml(ge, MODEL_URL,
-                               //function(obj) { me.finishInit(obj); });
 }
 
 function loadAnimationModel(model, frame){
@@ -153,9 +249,11 @@ Truck.prototype.loadModel = function(model){
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
   me.frame = 1;
+
   ge.getFeatures().appendChild(me.placemark);
   me.location = me.model.getLocation();
   me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
   me.linker = ge.createLink('');
   if (model.animated){
     me.linker.setHref(model.url + '1.dae');
@@ -167,6 +265,7 @@ Truck.prototype.loadModel = function(model){
     me.linker.setHref(model.url + '.dae');
   }
   me.model.setLink(me.linker);
+
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
   scale = ge.createScale('');
@@ -198,31 +297,10 @@ Truck.prototype.switchModel = function(url) {
   me.model.setLink(me.linker);
 }
 
+
+
 Truck.prototype.finishInit = function() {
   var me = this;
-
-  //walkKmlDom(kml, function() {
-    //if (this.getType() == 'KmlPlacemark' &&
-        //this.getGeometry() &&
-        //this.getGeometry().getType() == 'KmlModel')
-      //me.placemark = this;
-  //});
-
-  //me.model = me.placemark.getGeometry();
-  //me.orientation = me.model.getOrientation();
-  //me.location = me.model.getLocation();
-
-  //me.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
-  //me.orientation.setHeading(90);
-  //me.model.setOrientation(me.orientation);
-
-  //ge.getFeatures().appendChild(me.placemark);
-
-  me.balloon = ge.createHtmlStringBalloon('');
-  me.balloon.setFeature(me.placemark);
-  me.balloon.setMaxWidth(350);
-  me.balloon.setForegroundColor(BALLOON_FG);
-  me.balloon.setBackgroundColor(BALLOON_BG);
 
   me.teleportTo(INIT_LOC.lat, INIT_LOC.lon, INIT_LOC.heading);
 
@@ -237,9 +315,7 @@ Truck.prototype.finishInit = function() {
   me.shadow.setAltitudeMode(ge.ALTITUDE_CLAMP_TO_SEA_FLOOR);
   me.shadow.getIcon().setHref(PAGE_PATH + 'shadowrect.png');
   me.shadow.setVisibility(true);
-  //ge.getFeatures().appendChild(me.shadow);
 
-  google.earth.addEventListener(ge, "frameend", function() { me.tick(); });
 
   me.cameraCut();
 
@@ -249,8 +325,8 @@ Truck.prototype.finishInit = function() {
   // If the user clicks on the Earth window, try to restore keyboard
   // focus back to the page.
   google.earth.addEventListener(ge.getWindow(), "mouseup", function(event) {
-      ge.getWindow().blur();
-    });
+    ge.getWindow().blur();
+  });
 }
 
 leftButtonDown = false;
@@ -258,6 +334,7 @@ rightButtonDown = false;
 gasButtonDown = false;
 reverseButtonDown = false;
 switchButtonDown = false;
+shootButtonDown = false;
 
 function keyDown(event) {
   if (!event) {
@@ -278,7 +355,12 @@ function keyDown(event) {
   } else if(event.keyCode == 83){
     switchButtonDown = true;
     event.returnValue = false;
-  } else {
+  } else if(event.keyCode == 32){
+    shootButtonDown = true;
+    event.returnValue = false;
+  }
+   else {
+    console.log(event.keyCode);
     return true;
   }
   return false;
@@ -301,6 +383,10 @@ function keyUp(event) {
     reverseButtonDown = false;
     event.returnValue = false;
   }
+  else if (event.keyCode == 32){
+    shootButtonDown = false;
+    event.returnValue = false;
+  }
   return false;
 }
 
@@ -313,7 +399,7 @@ function clamp(val, min, max) {
   return val;
 }
 
-Truck.prototype.tick = function() {
+Truck.prototype.update = function() {
   var me = this;
 
   if (switchButtonDown){
@@ -333,6 +419,14 @@ Truck.prototype.tick = function() {
     me.nextFrame();
   }
 
+  if (shootButtonDown) {
+    muzzle_flash.options.lat = me.location.getLatitude();
+    muzzle_flash.options.long = me.location.getLongitude();
+    muzzle_flash.options.alt = me.location.getAltitude();
+    
+    addObject(muzzle_flash);
+    shootButtonDown = false;
+  }
   var now = (new Date()).getTime();
   // dt is the delta-time since last tick, in seconds
   var dt = (now - me.lastMillis) / 1000.0;
@@ -563,83 +657,6 @@ function estimateGroundNormal(pos, frame) {
   var normal = V3.normalize([dx, dy, 2]);
   return normal;
 }
-
-// Decide when to open & close popup messages.
-Truck.prototype.tickPopups = function(dt) {
-  var me = this;
-  var speed = V3.length(me.vel);
-  if (me.popupTimer > 0) {
-    me.popupTimer -= dt;
-    me.idleTimer = 0;
-    me.fastTimer = 0;
-    if (me.popupTimer <= 0) {
-      me.popupTimer = 0;
-      ge.setBalloon(null);
-    }
-  } else {
-    if (speed < 20) {
-      me.idleTimer += dt;
-      if (me.idleTimer > 10.0) {
-        //me.showIdlePopup();
-      }
-      me.fastTimer = 0;
-    } else {
-      me.idleTimer = 0;
-      if (speed > 80) {
-        me.fastTimer += dt;
-        if (me.fastTimer > 7.0) {
-          me.showFastPopup();
-        }
-      } else {
-        me.fastTimer = 0;
-      }
-    }
-  }
-};
-
-var IDLE_MESSAGES = [
-    "Let's deliver some milk!",
-    "Hello?",
-    "Dude, <font color=red><i>step on it!</i></font>",
-    "I'm sitting here getting sour!",
-    "We got customers waiting!",
-    "Zzzzzzz",
-    "Sometimes I wish I worked for UPS."
-                     ];
-Truck.prototype.showIdlePopup = function() {
-  var me = this;
-  me.popupTimer = 2.0;
-  var rand = Math.random();
-  var index = Math.floor(rand * IDLE_MESSAGES.length)
-    % IDLE_MESSAGES.length;
-  var message = "<center>" + IDLE_MESSAGES[index] + "</center>";
-  me.balloon.setContentString(message);
-  ge.setBalloon(me.balloon);
-};
-
-var FAST_MESSAGES = [
-    "Whoah there, cowboy!",
-    "Wheeeeeeeeee!",
-    "<font size=+5 color=#8080FF>Creamy!</font>",
-    "Hey, we're hauling glass bottles here!"
-                     ];
-Truck.prototype.showFastPopup = function() {
-  var me = this;
-  me.popupTimer = 2.0;
-  var rand = Math.random();
-  var index = Math.floor(rand * FAST_MESSAGES.length)
-    % FAST_MESSAGES.length;
-  var message = "<center>" + FAST_MESSAGES[index] + "</center>";
-  me.balloon.setContentString(message);
-  ge.setBalloon(me.balloon);
-};
-
-Truck.prototype.scheduleTick = function() {
-  var me = this;
-  if (me.doTick) {
-    setTimeout(function() { me.tick(); }, TICK_MS);
-  }
-};
 
 // Cut the camera to look at me.
 Truck.prototype.cameraCut = function() {
