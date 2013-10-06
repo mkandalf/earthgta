@@ -32,6 +32,7 @@ var car = {
   accel: 50.0,
   decel: 80.0,
   scale: 1.0,
+  steering: true,
   max_rev_speed: 40.0,
   max_speed: 100.0,
   steer_roll: -1.0,
@@ -43,7 +44,8 @@ var car = {
 var person = {
   url: host + 'person/an',
   animated: true,
-  accel: 50.0,
+  steering: false,
+  accel: 1000.0,
   decel: 8.0,
   scale: 0.5,
   max_rev_speed: 0.0,
@@ -277,6 +279,7 @@ function loadAnimationModel(model, frame){
 Truck.prototype.loadModel = function(model){
   var me = this;
   me.data = model;
+  me.checking_road = false;
   me.placemark = ge.createPlacemark('');
   me.model = ge.createModel('');
   me.frame = 1;
@@ -488,42 +491,56 @@ Truck.prototype.update = function() {
   var groundAlt = ge.getGlobe().getGroundAltitude(lla[0], lla[1]);
   var airborne = (groundAlt + 0.30 < me.pos[2]);
   var steerAngle = 0;
+  var right = me.modelFrame[0];
   
-  // Steering.
-  if (leftButtonDown || rightButtonDown) {
-    var TURN_SPEED_MIN = 60.0;  // radians/sec
-    var TURN_SPEED_MAX = 100.0;  // radians/sec
- 
-    var turnSpeed;
+  if (me.data.steering){
+    // Steering.
+    if (leftButtonDown || rightButtonDown) {
+      var TURN_SPEED_MIN = 60.0;  // radians/sec
+      var TURN_SPEED_MAX = 100.0;  // radians/sec
+   
+      var turnSpeed;
 
-    // Degrade turning at higher speeds.
-    //
-    //           angular turn speed vs. vehicle speed
-    //    |     -------
-    //    |    /       \-------
-    //    |   /                 \-------
-    //    |--/                           \---------------
-    //    |
-    //    +-----+-------------------------+-------------- speed
-    //    0    SPEED_MAX_TURN           SPEED_MIN_TURN
-    var SPEED_MAX_TURN = 25.0;
-    var SPEED_MIN_TURN = 120.0;
-    if (absSpeed < SPEED_MAX_TURN) {
-      turnSpeed = TURN_SPEED_MIN + (TURN_SPEED_MAX - TURN_SPEED_MIN)
-                   * (SPEED_MAX_TURN - absSpeed) / SPEED_MAX_TURN;
-      turnSpeed *= (absSpeed / SPEED_MAX_TURN);  // Less turn as truck slows
-    } else if (absSpeed < SPEED_MIN_TURN) {
-      turnSpeed = TURN_SPEED_MIN + (TURN_SPEED_MAX - TURN_SPEED_MIN)
-                  * (SPEED_MIN_TURN - absSpeed)
-                  / (SPEED_MIN_TURN - SPEED_MAX_TURN);
-    } else {
-      turnSpeed = TURN_SPEED_MIN;
+      // Degrade turning at higher speeds.
+      //
+      //           angular turn speed vs. vehicle speed
+      //    |     -------
+      //    |    /       \-------
+      //    |   /                 \-------
+      //    |--/                           \---------------
+      //    |
+      //    +-----+-------------------------+-------------- speed
+      //    0    SPEED_MAX_TURN           SPEED_MIN_TURN
+      var SPEED_MAX_TURN = 25.0;
+      var SPEED_MIN_TURN = 120.0;
+      if (absSpeed < SPEED_MAX_TURN) {
+        turnSpeed = TURN_SPEED_MIN + (TURN_SPEED_MAX - TURN_SPEED_MIN)
+                     * (SPEED_MAX_TURN - absSpeed) / SPEED_MAX_TURN;
+        turnSpeed *= (absSpeed / SPEED_MAX_TURN);  // Less turn as truck slows
+      } else if (absSpeed < SPEED_MIN_TURN) {
+        turnSpeed = TURN_SPEED_MIN + (TURN_SPEED_MAX - TURN_SPEED_MIN)
+                    * (SPEED_MIN_TURN - absSpeed)
+                    / (SPEED_MIN_TURN - SPEED_MAX_TURN);
+      } else {
+        turnSpeed = TURN_SPEED_MIN;
+      }
+      if (leftButtonDown) {
+        steerAngle = turnSpeed * dt * Math.PI / 180.0;
+      }
+      if (rightButtonDown) {
+        steerAngle = -turnSpeed * dt * Math.PI / 180.0;
+      }
     }
-    if (leftButtonDown) {
-      steerAngle = turnSpeed * dt * Math.PI / 180.0;
-    }
-    if (rightButtonDown) {
-      steerAngle = -turnSpeed * dt * Math.PI / 180.0;
+  }
+  else {
+    if (leftButtonDown || rightButtonDown){
+      if (leftButtonDown) {
+          n = 1;
+      } else if (rightButtonDown) {
+          n = -1;
+      }
+      steerAngle = n * 25 * dt * Math.PI / 180;
+      right = V3.rotate(right, up, steerAngle); //head   
     }
   }
   
@@ -546,23 +563,41 @@ Truck.prototype.update = function() {
     //
     // For a variable time step:
     //  c0 = exp(-dt / TIME_CONSTANT)
-    var right = me.modelFrame[0];
     var slip = V3.dot(me.vel, right);
     c0 = Math.exp(-dt / 0.5);
     me.vel = V3.sub(me.vel, V3.scale(right, slip * (1 - c0)));
 
     // Apply engine/reverse accelerations.
     forwardSpeed = V3.dot(dir, me.vel);
-    if (gasButtonDown) {
-      // Accelerate forwards.
-      if (forwardSpeed < me.data.max_speed){
-        me.vel = V3.add(me.vel, V3.scale(dir, me.data.accel * dt));
+    if (me.data.steering){
+      if (gasButtonDown) {
+        // Accelerate forwards.
+        if (forwardSpeed < me.data.max_speed){
+          me.vel = V3.add(me.vel, V3.scale(dir, me.data.accel * dt));
+        }
+      } else if (reverseButtonDown) {
+        if (forwardSpeed > -me.data.max_rev_speed)
+          me.vel = V3.add(me.vel, V3.scale(dir, -me.data.decel * dt));
       }
-    } else if (reverseButtonDown) {
-      if (forwardSpeed > -me.data.max_rev_speed)
-        me.vel = V3.add(me.vel, V3.scale(dir, -me.data.decel * dt));
+    }
+    else {
+      if (gasButtonDown) {
+          if (!airborne) {
+              me.vel = [0, 0, 0];
+          }
+          me.vel = V3.add(me.vel, V3.scale(dir, ((150 + 35) / (3)) * 1 * dt));
+      } else if (!airborne) {
+          me.vel = [0, 0, 0];
+      }
+      else if (reverseButtonDown){
+        me.vel = [0, 0, 0];
+      }
     }
   }
+  me.modelFrame = M33.makeOrthonormalFrame(dir, up);
+  right = me.modelFrame[0];
+  dir = me.modelFrame[1];
+  up = me.modelFrame[2];
 
   // Air drag.
   //
@@ -577,22 +612,24 @@ Truck.prototype.update = function() {
   // so:
   // accel = 0.6 / 2000 * 3 * v^2
   // accel = 0.0009 * v^2
-  absSpeed = V3.length(me.vel);
-  if (absSpeed > 0.01) {
-    var veldir = V3.normalize(me.vel);
-    var DRAG_FACTOR = 0.00090;
-    var drag = absSpeed * absSpeed * DRAG_FACTOR;
+  if (me.data.steering){
+    absSpeed = V3.length(me.vel);
+    if (absSpeed > 0.01) {
+      var veldir = V3.normalize(me.vel);
+      var DRAG_FACTOR = 0.00090;
+      var drag = absSpeed * absSpeed * DRAG_FACTOR;
 
-    // Some extra constant drag (rolling resistance etc) to make sure
-    // we eventually come to a stop.
-    var CONSTANT_DRAG = 2.0;
-    drag += CONSTANT_DRAG;
+      // Some extra constant drag (rolling resistance etc) to make sure
+      // we eventually come to a stop.
+      var CONSTANT_DRAG = 2.0;
+      drag += CONSTANT_DRAG;
 
-    if (drag > absSpeed) {
-      drag = absSpeed;
+      if (drag > absSpeed) {
+        drag = absSpeed;
+      }
+
+      me.vel = V3.sub(me.vel, V3.scale(veldir, drag * dt));
     }
-
-    me.vel = V3.sub(me.vel, V3.scale(veldir, drag * dt));
   }
 
   // Gravity
@@ -640,15 +677,17 @@ Truck.prototype.update = function() {
 
   var newhtr = M33.localOrientationMatrixToHeadingTiltRoll(me.modelFrame);
 
-  // Compute roll according to steering.
-  // TODO: this would be even more cool in 3d.
   var absRoll = newhtr[2];
-  me.rollSpeed += steerAngle * forwardSpeed * me.data.steer_roll;
-  // Spring back to center, with damping.
-  me.rollSpeed += (me.data.roll_spring * -me.roll + me.data.roll_damp * me.rollSpeed);
-  me.roll += me.rollSpeed * dt;
-  me.roll = clamp(me.roll, -30, 30);
-  absRoll += me.roll;
+  if (me.data.steering){
+    // Compute roll according to steering.
+    // TODO: this would be even more cool in 3d.
+    me.rollSpeed += steerAngle * forwardSpeed * me.data.steer_roll;
+    // Spring back to center, with damping.
+    me.rollSpeed += (me.data.roll_spring * -me.roll + me.data.roll_damp * me.rollSpeed);
+    me.roll += me.rollSpeed * dt;
+    me.roll = clamp(me.roll, -30, 30);
+    absRoll += me.roll;
+  }
 
   me.orientation.set(newhtr[0] + 180, newhtr[1], absRoll);
 
@@ -661,6 +700,11 @@ Truck.prototype.update = function() {
   latLonBox.setRotation(-newhtr[0]);
 
   me.cameraFollow(dt, gpos, me.localFrame);
+
+  if (!me.checking_road){
+    me.checking_road = true;
+    check_points(me, lla[1], lla[0]);
+  }
 };
 
 
@@ -767,6 +811,27 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
   }
 };
 
+Truck.prototype.dropAt = function(lat, lon, heading) {
+  var me = this;
+  me.model.getLocation().setLatitude(lat);
+  me.model.getLocation().setLongitude(lon);
+  me.model.getLocation().setAltitude(ge.getGlobe().getGroundAltitude(lat, lon) + 50.0);
+  if (heading == null) {
+    heading = 0;
+  }
+  me.vel = [0, 0, 0];
+
+  me.localAnchorLla = [lat, lon, 0];
+  me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
+  me.localFrame = M33.makeLocalToGlobalFrame(me.localAnchorLla);
+  me.modelFrame = M33.identity();
+  me.modelFrame[0] = V3.rotate(me.modelFrame[0], me.modelFrame[2], -heading);
+  me.modelFrame[1] = V3.rotate(me.modelFrame[1], me.modelFrame[2], -heading);
+  me.pos = [0, 0, ge.getGlobe().getGroundAltitude(lat, lon)];
+
+  me.cameraCut();
+};
+
 // Move our anchor closer to our current position.  Retain our global
 // motion state (position, orientation, velocity).
 Truck.prototype.adjustAnchor = function() {
@@ -816,14 +881,28 @@ function check_points(x, y) {
             {getSteps: true, getPolyline: true});
 }
 
-function DS_directionsLoaded(x, y) {
+function float_cmp(a, b){
+  return Math.abs(a - b) < 0.00012;
+}
+function check_points(model, x, y){
+  google.maps.Event.clearListeners(DS_directions, 'load');
+  google.maps.Event.addListener(DS_directions, 'load', DS_directionsLoaded(model, x, y));
+  google.maps.Event.addListener(DS_directions, 'error', function() {model.checking_road = false;});
+  //DS_directions.load('from: ' + x + ', ' + y + ' to: 37.428, -122.08673',
+  DS_directions.load('from: ' + y + ', ' + x + ' to: ' + y + ', ' + x,
+            {getSteps: true, getPolyline: true});
+}
+function DS_directionsLoaded(model, x, y){
   return function(){
-    if (x == DS_directions.getRoute(0).getStep(0).getLatLng().x 
-     && y == DS_directions.getRoute(0).getStep(0).getLatLng().y){
-       console.log('on road');
+    var new_x = DS_directions.getRoute(0).getStep(0).getLatLng().x ;
+    var new_y = DS_directions.getRoute(0).getStep(0).getLatLng().y;
+    if (float_cmp(x, new_x)
+     && float_cmp(y, new_y)){
      }
     else {
-      console.log ('off road');
+      model.dropAt(new_y, new_x, 90);
+      model.vel = [0,0,0];
     }
+    model.checking_road = false;
   }
 }

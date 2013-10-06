@@ -49,8 +49,8 @@
     function doGeocode(address) {
       geocoder.getLatLng(address, function(point) {
         if (point) {
-          if (ge != null && truck != null) {
-            truck.teleportTo(point.y, point.x);
+          if (ge != null && scene != null && scene.player1 != null) {
+            scene.player1.teleportTo(point.y, point.x);
           }
         }
       });
@@ -70,12 +70,12 @@
       </form>
   
       Presets:
-      <input type=button value="Th' Plex" onclick="truck.teleportTo(37.423501,-122.086744,90);"/>
+      <input type=button value="Th' Plex" onclick="scene.player1.teleportTo(37.423501,-122.086744,90);"/>
       <input type=button value="San Francisco" onclick="doGeocode('San Francisco');"/>
-      <input type=button value="Whistler" onclick="truck.teleportTo(50.085734,-122.855824,220);"/>
-      <input type=button value="Pismo" onclick="truck.teleportTo(35.040675,-120.629513,170);"/>
-      <input type=button value="Tokyo" onclick="truck.teleportTo(35.668607,139.822026,180);"/>
-      <input type=button value="Everest" onclick="truck.teleportTo(27.991283,86.924340,70);"/>
+      <input type=button value="Whistler" onclick="scene.player1.teleportTo(50.085734,-122.855824,220);"/>
+      <input type=button value="Pismo" onclick="scene.player1.teleportTo(35.040675,-120.629513,170);"/>
+      <input type=button value="Tokyo" onclick="scene.player1.teleportTo(35.668607,139.822026,180);"/>
+      <input type=button value="Everest" onclick="scene.player1.teleportTo(27.991283,86.924340,70);"/>
     </div>
     <div id='map' style='display:none'></div>
   </body>
