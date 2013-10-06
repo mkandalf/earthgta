@@ -30,6 +30,7 @@ body {
   width: 100%;
   top: 10px;
   text-align:center;
+}
 #wasted {
   position: absolute;
   opacity: 0.5;

@@ -790,7 +790,7 @@ Truck.prototype.update = function() {
         //if (V3.length(me.vel) > 40){
           if (car === scene.player1 || (me === scene.player1 && me.data.type == 'car')){
             recently_collided = true;
-            if (V3.length(me.vel) > 40){
+            if (V3.length(me.vel) > 70){
               document.getElementById('wasted').className = 'wasted';
             }
             else {
