@@ -15,7 +15,7 @@
 
     var ge = null;
     var geocoder;
-    var truck;
+    var scene;
 
     function el(e) { return document.getElementById(e); }
 
@@ -30,7 +30,7 @@
       ge.getWindow().setVisibility(true);
       ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
       ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
-      truck = new Truck();
+      scene = new Scene();
       keyboardFocusHack(ge);
     }
 

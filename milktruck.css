@@ -4,7 +4,7 @@ body {
 }
 
 #map3d {
-  height: 800px;
+  height: 500px;
   z-index: -1;
 }
 

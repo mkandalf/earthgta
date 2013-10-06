@@ -127,10 +127,12 @@ function Scene() {
   self.cars = [];
   self.people = [];
 
-  self.player1 = null;
+  self.player1 = new Truck();
 
   self.initCars();
   self.initPeople();
+
+  google.earth.addEventListener(ge, "frameend", function() { self.update(); });
 }
 
 Scene.prototype.initCars = function() {
@@ -177,23 +179,20 @@ Scene.prototype.removeObject = function(object) {
 
 Scene.prototype.update = function() {
   var self = this;
-  cars.forEach(function(c, i) {
+  self.cars.forEach(function(c, i) {
     // if car is to far away move it
   });
 
-  people.forEach(function(p, i) {
+  self.people.forEach(function(p, i) {
     // if person is too far away, move him
   });
 
-  // player1.update();
+  self.player1.update();
 }
 
 
 function Truck() {
   var me = this;
-
-  me.doTick = true;
-  
   // We do all our motion relative to a local coordinate frame that is
   // anchored not too far from us.  In this frame, the x axis points
   // east, the y axis points north, and the z axis points straight up
@@ -204,17 +203,13 @@ function Truck() {
   me.localAnchorLla = [0, 0, 0];
   me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
   me.localFrame = M33.identity();
-
   // Position, in local cartesian coords.
   me.pos = [0, 0, 0];
-  
   // Velocity, in local cartesian coords.
   me.vel = [0, 0, 0];
-
   // Orientation matrix, transforming model-relative coords into local
   // coords.
   me.modelFrame = M33.identity();
-
   me.roll = 0;
   me.rollSpeed = 0;
   
@@ -267,7 +262,6 @@ Truck.prototype.finishInit = function() {
   me.shadow.setVisibility(true);
   // ge.getFeatures().appendChild(me.shadow);
 
-  google.earth.addEventListener(ge, "frameend", function() { me.tick(); });
 
   me.cameraCut();
 
@@ -351,7 +345,7 @@ function clamp(val, min, max) {
   return val;
 }
 
-Truck.prototype.tick = function() {
+Truck.prototype.update = function() {
   var me = this;
 
   if (switchModel){
@@ -603,13 +597,6 @@ function estimateGroundNormal(pos, frame) {
   var normal = V3.normalize([dx, dy, 2]);
   return normal;
 }
-
-Truck.prototype.scheduleTick = function() {
-  var me = this;
-  if (me.doTick) {
-    setTimeout(function() { me.tick(); }, TICK_MS);
-  }
-};
 
 // Cut the camera to look at me.
 Truck.prototype.cameraCut = function() {
