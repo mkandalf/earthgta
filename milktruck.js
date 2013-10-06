@@ -408,9 +408,9 @@ Truck.prototype.tick = function() {
   }
   else {
     if (leftButtonDown || rightButtonDown){
-      if (leftTurn) {
+      if (leftButtonDown) {
           n = 1;
-      } else if (rightTurn) {
+      } else if (rightButtonDown) {
           n = -1;
       }
       steerAngle = n * 25 * dt * Math.PI / 180;
