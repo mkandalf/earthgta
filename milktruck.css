@@ -4,7 +4,7 @@ body {
 }
 
 #map3d {
-  height: 800px;
+  height: 600px;
   z-index: -1;
 }
 
@@ -35,7 +35,7 @@ body {
   position: absolute;
   opacity: 0.5;
   background-color: #444;
-  height: 800px;
+  height: 600px;
   /*width: 400px;*/
   width: 100%;
 }

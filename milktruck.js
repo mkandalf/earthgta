@@ -1018,8 +1018,6 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
   jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; window.conditions = parsed_json['current_observation']['weather']; console.log("conditions: "+window.conditions);
   if (window.conditions.indexOf("Rain")>=0){
     makeItRain();
-  }else{
-    stopTheRain();
   }
 } }); });
   
@@ -1149,26 +1147,7 @@ function makeItRain(){
   console.log('makin it rain!');
   ge.getSun().setVisibility(true);
   ge.getOptions().setAtmosphereVisibility(true);
-  var drop = $('.drop').detach();
-  function create(){
-    var clone = drop
-      .clone()
-      .appendTo('.container')
-      .css('left', Math.random()*$(document).width()-20)
-      .animate(
-                {'top': $(document).height()-20},
-                Math.random(1000)+500
-               ,function(){
-                 $(this).fadeOut(200,function(){$(this).remove();$('.state').text($('.container .drop').length+' Drops');}); 
-               });
-  }
   playRain();
-  function makeRain(){
-    for(var i=0; i<30; i++){
-      setTimeout(create,Math.random()*700);
-    }
-  }
-  setInterval(makeRain, 500);
 }
 function stopTheRain(){
   ge.getSun().setVisibility(false);
@@ -1185,12 +1164,8 @@ function stopSiren() {
 }
 
 function playRain() {
-  if(document.getElementById("forEmbedRain").innerHTML="<embed src='RAIN.mp3' autostart=true loop=true volume=100 hidden=true>"){}
-  else{
-    document.appendChild("#forEmbedRain").innerHTML
-  }
+  document.getElementById("forEmbedRain").innerHTML="<embed src='RAIN.mp3' autostart=true loop=true volume=100 hidden=true>";
   playingSiren = true;
-  return true;
 }
 function stopRain() {
   document.getElementById("forEmbedRain").remove();
