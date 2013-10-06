@@ -138,7 +138,10 @@ var addObject = function(object){
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   
   object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
+  try {
+    object.linker.setHref(object.options.urls[0]);
+  } catch (e) {
+  }
   object.model.setLink(object.linker);
 
   object.placemark.setGeometry(object.model);
@@ -196,6 +199,36 @@ function plotCars(lat1, lng1, lat2, lng2, self, cb) {
     }
   });
 }
+
+GTAref.on('child_added', function(snapshot) {
+ var user = snapshot.val();
+ if (!user.username) return;
+ if (!scene) return;
+ if (!scene.users) return;
+ // alert(user.username);
+ // console.log(user.username == username);
+ if (user.username != username) {
+   if (scene.users[user.username]) {
+     // move the user object
+     var object = scene.users[user.username];
+     object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+   } else {
+     // instantiate a user object and draw it
+     var object = {
+       type: user.type,
+       options: {
+        urls: [user.url],
+        lat: user.lat,
+        long: user.lng,
+        alt: user.alt,
+        scale: 1.0
+       }
+     };
+     scene.addObject(object);
+     scene.users[user.username] = object;
+   }
+ }
+});
 
 function Scene() {
   // initialize
@@ -255,36 +288,9 @@ Scene.prototype.removeObject = function(object) {
   object.linker.setHref('');
   object.model.setLink(object.linker);
 }
-
 Scene.prototype.update = function() {
   var self = this;
 
-   GTAref.on('child_added', function(snapshot) {
-     var user = snapshot.val();
-     // alert(user.username);
-     // console.log(user.username == username);
-     if (user.username != username) {
-       if (self.users[user.username]) {
-         // move the user object
-         var object = self.users[user.username];
-         object.setLatLngAlt(user.lat, user.lng, user.alt);
-       } else {
-         // instantiate a user object and draw it
-         var object = {
-           type: user.type,
-           options: {
-            urls: [user.url],
-            lat: 0,
-            long: 0,
-            alt: 0,
-            scale: 1.0
-           }
-         };
-         self.addObject(object);
-         self.users[user.username] = object;
-       }
-     }
-   });
 
   self.cars.forEach(function(c, i) {
     // if car is to far away move it
@@ -316,7 +322,7 @@ Scene.prototype.update = function() {
       for (i = 0; i < scene.cars.length; i++){
         car = scene.cars[i];
         dist = distance(scene.player1, car);
-        console.log(dist);
+        // console.log(dist);
         if (dist < 5.5){
           if (dist < closest_dist){
             closest_dist = dist;
@@ -378,7 +384,10 @@ Scene.prototype.addObject = function(object){
   object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
   
   object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
+  try {
+    object.linker.setHref(object.options.urls[0]);
+  } catch (e) {
+  }
   object.model.setLink(object.linker);
 
   object.placemark.setGeometry(object.model);
@@ -518,7 +527,7 @@ Truck.prototype.nextFrame = function() {
 
 Truck.prototype.switchModel = function(url) {
   var me = this;
-  console.log(url);
+  // console.log(url);
   me.linker = ge.createLink('');
   me.linker.setHref(url);
   me.model.setLink(me.linker);
@@ -596,7 +605,7 @@ function keyDown(event) {
     event.returnValue = false;
   }
    else {
-    console.log(event.keyCode);
+    // console.log(event.keyCode);
     return true;
   }
   return false;
@@ -787,7 +796,7 @@ Truck.prototype.update = function() {
         vec = V3.sub(me_cart, car_cart);
 
         me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
-        console.log("Velocity: "+me.vel);
+        // console.log("Velocity: "+me.vel);
       }
     }
   }
