@@ -109,17 +109,9 @@ var addObject = function(object){
   object.model.setScale(scale);
 }
 
-/*
- * Scene
- * an array of cars
- * an array of people
- * and player1
- *
- * addObject
- * removeObject
- *
- * update - update all objects
- */
+var mapRoute = function(route, cb) {
+
+}
 
 function Scene() {
   // initialize
@@ -129,48 +121,42 @@ function Scene() {
 
   self.player1 = new Truck();
 
-  self.initCars();
-  self.initPeople();
+  self.createCars();
+  self.createPeople();
 
   google.earth.addEventListener(ge, "frameend", function() { self.update(); });
 }
 
-Scene.prototype.initCars = function() {
-  console.log("initCars");
+Scene.prototype.createCars = function() {
+  console.log("createCars");
   var self = this;
-  // while (self.cars.length < 20) {
-  // }
+  while (self.cars.length < 20) {
+    var lat = self.player1.location.getLatitude();
+    var lng = self.player1.location.getLongitude();
+
+    route = "";
+
+    mapRoute(route, function(data) {
+      var car = {
+        options: {
+          urls: [],
+          lat: 0,
+          long: 0,
+          alt: 0
+        }
+      }
+      self.addObject(car);
+      self.cars.push(car);
+    });
+    break;
+  }
 }
 
-Scene.prototype.initPeople = function() {
-  console.log("initPeople");
+Scene.prototype.createPeople = function() {
+  console.log("createPeople");
   var self = this;
   // while (self.people.length < 20) {
   // }
-}
-
-Scene.prototype.addObject = function(object){
-  // adds an object to the scene
-  object.placemark = ge.createPlacemark('');
-  object.model = ge.createModel('');
-  
-  ge.getFeatures().appendChild(object.placemark);
-
-  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
-  
-  object.linker = ge.createLink('');
-  object.linker.setHref(object.options.urls[0]);
-  object.model.setLink(object.linker);
-
-  object.placemark.setGeometry(object.model);
-  object.model.getLocation().setLatLngAlt(object.options.lat,
-                                          object.options.long,
-                                          object.options.alt);
-  scale = ge.createScale('');
-  scale.setX(object.options.scale);
-  scale.setY(object.options.scale);
-  scale.setZ(object.options.scale);
-  object.model.setScale(scale);
 }
 
 Scene.prototype.removeObject = function(object) {
@@ -188,6 +174,31 @@ Scene.prototype.update = function() {
   });
 
   self.player1.update();
+}
+
+Scene.prototype.addObject = function(object){
+  // adds an object to the scene
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt);
+  if (object.options.scale) {
+    scale = ge.createScale('');
+    scale.setX(object.options.scale);
+    scale.setY(object.options.scale);
+    scale.setZ(object.options.scale);
+    object.model.setScale(scale);
+  }
 }
 
 
