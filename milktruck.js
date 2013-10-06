@@ -116,8 +116,49 @@ var addObject = function(object){
   object.model.setScale(scale);
 }
 
-var mapRoute = function(route, cb) {
-  get_directions(route, cb);
+function plotCars(lat1, lng1, lat2, lng2, self, cb) {
+  var route = "from: " + lat1 + ", " + lng1 + " to: " + lat2 + ", " + lng2;
+  console.log(route);
+
+  get_directions(route, function(data) {
+    var steps = data.g.Directions.Routes[0].Steps;
+    console.log(steps);
+
+    if (steps.length > 1) {
+      var s = steps[1];
+      var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
+      console.log(steps.map(function(s) { return {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]} }));
+      console.log("first step");
+      console.log(lng1, lat1);
+      console.log(p);
+      console.log("truck");
+
+      var o = 6;
+      for (var i = 1; i < o; i++) {
+        (function() {
+          var p1 = V3.latLonAltToCartesian([lat1, lng1, 0]);
+          var p2 = V3.latLonAltToCartesian([p.lat, p.lng, 0]);
+
+          var s = V3.sub(p1, p2)
+          var n = V3.add(p1, V3.scale(V3.normalize(s), i))
+          var m = V3.cartesianToLatLonAlt(n);
+
+          console.log(m);
+          
+          // self.cars.push(new Truck({lat: lat1, lng: lng1}));
+          var car = new Truck({
+            lat: m[0],
+            lng: m[1]
+          });
+          self.cars.push(car);
+        })()
+      }
+    }
+      
+    if (cb) {
+      cb();
+    }
+  });
 }
 
 function Scene() {
@@ -126,10 +167,7 @@ function Scene() {
   self.cars = [];
   self.people = [];
 
-  self.player1 = new Truck({
-    lat: 37.421013267172974,
-    lng: -122.08530936333837
-  });
+  self.player1 = new Truck();
   self.cars.push(self.player1);
 
   self.createCars();
@@ -151,38 +189,15 @@ Scene.prototype.createCars = function() {
     });
     self.cars.push(player2);
 
-    route = "from: " + (lat - 0.001) + ", " + (lng) + " to: " + (lat + 0.001) + ", " + (lng);
-    mapRoute(route, function(data) {
-      console.log("once");
-      // console.log(data);
-      data.g.Directions.Routes[0].Steps.forEach(function(s, i) {
-        var p = {lng: s.Point.coordinates[0], lat: s.Point.coordinates[1]};
-        console.log(p);
-        var car = new Truck(p);
-        self.cars.push(car);
-      });
-
-      route = "from: " + (lat) + ", " + (lng - 0.001) + " to: " + (lat) + ", " + (lng + 0.001);
-      mapRoute(route, function(data) {
-        console.log("twice");
-        // console.log(data);
-        var steps = data.g.Directions.Routes[0].Steps
-        steps.forEach(function(s1, i) {
-          var s2 = steps[i+1];
-          if (!s2) return;
-          
-          var p1 = {lng: s1.Point.coordinates[0], lat: s1.Point.coordinates[1]};
-          var p2 = {lng: s2.Point.coordinates[0], lat: s2.Point.coordinates[1]};
-
-          console.log(p1);
-
-          var car = new Truck(p1);
-          self.cars.push(car);
-        });
-      });
-
+    var player3 = new Truck({
+      lng: lng+0.0001,
+      lat: lat
     });
+    self.cars.push(player3);
 
+
+    plotCars(lat, lng, lat + 0.005, lng, self, function() {});
+        // plotCars(lat, lng, lat, lng + 0.005, self, function() {}));
 
     break;
   }
@@ -246,7 +261,7 @@ function distance(obj1, obj2){
   return Math.sqrt(
       Math.pow(obj1_cart[0] - obj2_cart[0], 2.0) +
       Math.pow(obj1_cart[1] - obj2_cart[1], 2.0) +
-      Math.pow(obj1_cart[1] - obj2_cart[1], 2.0)
+      Math.pow(obj1_cart[2] - obj2_cart[2], 2.0)
   );
 }
 
@@ -326,11 +341,13 @@ Truck.prototype.loadModel = function(model){
 
   me.placemark.setGeometry(me.model);
   me.orientation = me.model.getOrientation();
-  scale = ge.createScale('');
-  scale.setX(model.scale);
-  scale.setY(model.scale);
-  scale.setZ(model.scale);
-  me.model.setScale(scale);
+  if (model.scale) {
+    scale = ge.createScale('');
+    scale.setX(model.scale);
+    scale.setY(model.scale);
+    scale.setZ(model.scale);
+    me.model.setScale(scale);
+  }
 }
 
 Truck.prototype.nextFrame = function() {
@@ -749,7 +766,7 @@ Truck.prototype.update = function() {
 
   if (scene.player1 === me && !me.checking_road) {
     me.checking_road = true;
-    check_points(me, lla[1], lla[0]);
+    // check_points(me, lla[1], lla[0]);
   }
 };
 
