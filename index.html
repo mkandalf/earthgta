@@ -10,6 +10,9 @@
   <script type="text/javascript" src="./lib/kmldomwalk.js"></script>
   <script type="text/javascript">
   </script>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+
   <script type="text/javascript" src="milktruck.js"></script>
   <script type="text/javascript">
     google.load("earth", "1");
@@ -58,8 +61,34 @@
     }
 
   </script>
+  <style>
+    @size: 10px;
+    body{
+      background: #d7eef5;
+    }
+    .drop{
+      position: absolute;
+      left: 0px;
+      z-index: 0;
+      top: @size*-1px;
+      width: @size;
+      height: @size;
+      background: #79dbfc;
+      border-radius: 0px @size/2 @size/2 @size/2;
+      transform: rotate(45deg);
+    }
+    .state{
+      font-size: 10px;
+      font-family: tahoma;
+      color: #333;
+    }
+  </style>
 </head>
   <body onload='init()' onunload="GUnload()" onKeyDown="return keyDown(event);" onKeyUp="return keyUp(event);">
+    <div class="state"></div>
+    <div class="container">
+      <div class="drop"></drop>
+    </div>
     <div id='stars'>
       ★ ★ ★ ★ ★
     </div>

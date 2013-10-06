@@ -953,7 +953,11 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
     heading = 0;
   }
   me.vel = [0, 0, 0];
-
+  var conditions = "";
+  jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; var conditions = parsed_json['current_observation']['weather']; alert("Current temperature in " + location + " is: " + conditions); } }); });
+  if (conditions.indexOf('rain')!=-1){
+    makeItRain();
+  }
   me.localAnchorLla = [lat, lon, 0];
   me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
   me.localFrame = M33.makeLocalToGlobalFrame(me.localAnchorLla);
@@ -1075,10 +1079,36 @@ function DS_directionsLoaded(model, x, y){
     model.checking_road = false;
   }
 }
+
+function makeItRain(){
+  console.log('makin it rain!');
+  ge.getSun().setVisibility(true);
+  ge.getOptions().setAtmosphereVisibility(true);
+  var drop = $('.drop').detach();
+  function create(){
+    var clone = drop
+      .clone()
+      .appendTo('.container')
+      .css('left', Math.random()*$(document).width()-20)
+      .animate(
+                {'top': $(document).height()-20},
+                Math.random(1000)+500
+               ,function(){
+                 $(this).fadeOut(200,function(){$(this).remove();$('.state').text($('.container .drop').length+' Drops');}); 
+               });
+  }
+  
+  function makeRain(){
+    for(var i=0; i<30; i++){
+      setTimeout(create,Math.random()*700);
+    }
+  }
+  setInterval(makeRain, 500);
+}
+
 function playSiren() {
   document.getElementById("forEmbed").innerHTML="<embed src='siren.wav' autostart=true loop=true volume=100 hidden=true>";
   playingSiren = true;
-  return true;
 }
 function stopSiren() {
   document.getElementById("forEmbed").remove();
