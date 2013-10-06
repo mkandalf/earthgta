@@ -237,7 +237,7 @@ Scene.prototype.createCars = function() {
     var lng = self.player1.location.getLongitude();
 
     var player2 = new Truck({
-      lng: lng,
+      lng: lng-0.0001,
       lat: lat+0.0001*Math.random()
     }, police);
     self.cars.push(player2);
@@ -773,37 +773,43 @@ Truck.prototype.update = function() {
     }
   }
 
-  //for (i = 0; i < scene.cars.length; i++){
-    //car = scene.cars[i];
-    //var recently_collided;
-    //if (car === scene.player1 || me === scene.player1){
-      //recently_collided = false;
-    //}
-    //if (car !== me){
-      //if (distance(me, car) < 2){
-        //me_loc = me.model.getLocation();
-        //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
-        //car_loc = car.model.getLocation();
-        //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
-        //vec = V3.sub(me_cart, car_cart);
+  for (i = 0; i < scene.cars.length; i++){
+    car = scene.cars[i];
+    var recently_collided;
+    if (car === scene.player1 || me === scene.player1){
+      recently_collided = false;
+    }
+    if (car !== me){
+      if (distance(me, car) < 3){
+        me_loc = me.model.getLocation();
+        me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
+        car_loc = car.model.getLocation();
+        car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
+        vec = V3.sub(me_cart, car_cart);
 
-        ////if (V3.length(me.vel) > 40){
-          //if (car === scene.player1 || (me === scene.player1 && me.data.type == 'car')){
-            //recently_collided = true;
-            //if (!colliding){
-              //stars += 1;
-              //colliding = true;
-              ////document.getElementById("violation").innerHTML = 'Destruction of property';
-            //}
-            //var crashSound = new Audio('CRASHLOUD.mp3');
-            //crashSound.play();
-          //}
-        ////}
-        //me.vel = V3.add(me.vel, V3.scale(vec, 2 * V3.length(me.vel) * dt));
-      //}
-    //}
-    //colliding = recently_collided;
-  //}
+        //if (V3.length(me.vel) > 40){
+          if (car === scene.player1 || (me === scene.player1 && me.data.type == 'car')){
+            recently_collided = true;
+            if (V3.length(me.vel) > 40){
+              document.getElementById('wasted').className = 'wasted';
+            }
+            else {
+              console.log(V3.length(me.vel));
+            }
+            if (!colliding){
+              stars += 1;
+              colliding = true;
+              //document.getElementById("violation").innerHTML = 'Destruction of property';
+            }
+            var crashSound = new Audio('CRASHLOUD.mp3');
+            crashSound.play();
+          }
+        //}
+        me.vel = V3.add(me.vel, V3.scale(vec, 2 * V3.length(me.vel) * dt));
+      }
+    }
+    colliding = recently_collided;
+  }
 
   me.modelFrame = M33.makeOrthonormalFrame(dir, up);
   right = me.modelFrame[0];

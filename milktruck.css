@@ -39,7 +39,7 @@ body {
   width: 100%;
 }
 
-#wasted.wasted {
+.wasted {
   z-index: 100;
   background: url('wasted.png') repeat;
 }
