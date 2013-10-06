@@ -120,7 +120,7 @@ function Scene() {
 Scene.prototype.createCars = function() {
   console.log("createCars");
   var self = this;
-  while (self.cars.length < 20) {
+  while (self.cars.length < 2) {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
@@ -171,7 +171,7 @@ Scene.prototype.update = function() {
   var i;
   for (i = self.flashes.length - 1; i>=0; i--){
     self.flashes[i].frames_left -= 1;
-    if (self.flashes[i].frames_left == 0){
+    if (self.flashes[i].frames_left <= 0){
       ge.getFeatures().removeChild(self.flashes[i].placemark);
       self.flashes.splice(i, 1);
       //console.log(ge.getElementById(self.flashes[i].id));
