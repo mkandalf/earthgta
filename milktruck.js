@@ -97,7 +97,6 @@ var STEER_ROLL = -1.0;
 var ROLL_SPRING = 0.5;
 var ROLL_DAMP = -0.16;
 
-<<<<<<< HEAD
 var addObject = function(object){
   object.placemark = ge.createPlacemark('');
   object.model = ge.createModel('');
