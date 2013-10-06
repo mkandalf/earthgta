@@ -56,17 +56,7 @@
             object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
           } else {
             // instantiate a user object and draw it
-            var object = {
-              type: user.type,
-              options: {
-               urls: [user.url],
-               lat: user.lat,
-               long: user.lng,
-               alt: user.alt,
-               scale: 1.0
-              }
-            };
-            scene.addObject(object);
+            var object = new Truck({lat: user.lat, lng: user.lng});
             scene.users[user.username] = object;
           }
         }
