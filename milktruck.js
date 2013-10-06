@@ -1018,7 +1018,10 @@ Truck.prototype.teleportTo = function(lat, lon, heading) {
   jQuery(document).ready(function($) { $.ajax({ url : "http://api.wunderground.com/api/60c7ba33ae45995c/conditions/q/"+lat+","+lon+".json", dataType : "jsonp", success : function(parsed_json) { var location = parsed_json['current_observation']['display_location']['city']; window.conditions = parsed_json['current_observation']['weather']; console.log("conditions: "+window.conditions);
   if (window.conditions.indexOf("Rain")>=0){
     makeItRain();
-  }} }); });
+  }else{
+    stopTheRain();
+  }
+} }); });
   
   me.localAnchorLla = [lat, lon, 0];
   me.localAnchorCartesian = V3.latLonAltToCartesian(me.localAnchorLla);
@@ -1166,6 +1169,10 @@ function makeItRain(){
     }
   }
   setInterval(makeRain, 500);
+}
+function stopTheRain(){
+  ge.getSun().setVisibility(false);
+  stopRain();
 }
 
 function playSiren() {
