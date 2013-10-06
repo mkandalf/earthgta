@@ -25,7 +25,15 @@ model = 'car';
 
 var DS_map;
 var DS_directions;
-var GTAref = new Firebase('https://gtavi.firebaseio.com/');
+//var GTAref = new Firebase('https://gtavi.firebaseio.com/');
+var stars = 0;
+var original_car = null;
+var colliding = false;
+
+function set_stars(){
+  var starchars = Array(Math.min(6, stars+1)).join('★');
+  document.getElementById("stars").innerHTML = starchars;
+}
 
 var car = {
   type: 'car',
@@ -84,7 +92,7 @@ var person = {
   scale: 0.4,
   max_rev_speed: 0.0,
   max_speed: 5.0,
-  turn_speed:40,
+  turn_speed:60,
   steer_roll: 0.0,
   roll_spring: 0.0,
   roll_damp: -0.16,
@@ -179,12 +187,12 @@ function plotCars(lat1, lon1, lat2, lon2, self, cb) {
           Math.pow(p1[1] - p2[1], 2.0) +
           Math.pow(p1[2] - p2[2], 2.0)
       );
-      var o = dist / 100;
+      var o = dist / 100.0;
       var s = V3.sub(p2, p1);
       var n = V3.normalize(s);
       console.log('num cars: ' + o);
       for (var j = 0; j < Math.floor(o); j++) {
-        var v = V3.scale(n, j * dist / 100);
+        var v = V3.scale(n, j * dist / 100.0);
         var m = V3.cartesianToLatLonAlt(V3.add(p1,v));
 
         console.log(m);
@@ -203,36 +211,35 @@ function plotCars(lat1, lon1, lat2, lon2, self, cb) {
   });
 }
 
-GTAref.on('child_added', function(snapshot) {
-  var user = snapshot.val();
-  if (!user.username) return;
-  console.log(user.username);
-  if (!scene) return;
-  if (!scene.users) return;
-  // alert(user.username);
-  // console.log(user.username == username);
-  if (user.username != username) {
-    if (scene.users[user.username]) {
-      // move the user object
-      var object = scene.users[user.username];
-      object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
-    } else {
-      // instantiate a user object and draw it
-      var object = {
-        type: user.type,
-        options: {
-         urls: [user.url],
-         lat: user.lat,
-         long: user.lng,
-         alt: user.alt,
-         scale: 1.0
-        }
-      };
-      scene.addObject(object);
-      scene.users[user.username] = object;
-    }
-  }
-});
+//GTAref.on('child_added', function(snapshot) {
+  //var user = snapshot.val();
+  //if (!user.username) return;
+  //if (!scene) return;
+  //if (!scene.users) return;
+  //// alert(user.username);
+  //// console.log(user.username == username);
+  //if (user.username != username) {
+    //if (scene.users[user.username]) {
+      //// move the user object
+      //var object = scene.users[user.username];
+      //object.model.getLocation().setLatLngAlt(user.lat, user.lng, user.alt);
+    //} else {
+      //// instantiate a user object and draw it
+      //var object = {
+        //type: user.type,
+        //options: {
+         //urls: [user.url],
+         //lat: user.lat,
+         //long: user.lng,
+         //alt: user.alt,
+         //scale: 1.0
+        //}
+      //};
+      //scene.addObject(object);
+      //scene.users[user.username] = object;
+    //}
+  //}
+//});
 
 function Scene() {
   // initialize
@@ -245,6 +252,7 @@ function Scene() {
 
   self.player1 = new Truck();
   self.cars.push(self.player1);
+  original_car = self.player1;
 
   self.createCars();
   self.createPeople();
@@ -330,15 +338,14 @@ Scene.prototype.update = function() {
             closest_dist = dist;
             closest_car = car;
           }
-          //me_loc = me.model.getLocation();
-          //me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
-          //car_loc = car.model.getLocation();
-          //car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
-          //me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
         }
       }
       if (closest_car){
         ge.getFeatures().removeChild(self.player1.placemark);
+        //document.getElementById("violation").innerHTML = 'Car theft';
+        var gunSound = new Audio('CARSTART.mp3');
+        gunSound.play();
+        stars++;
         self.player1 = closest_car;
       }
     }
@@ -365,6 +372,8 @@ Scene.prototype.update = function() {
     gunSound.play();
     var glassSound = new Audio('GLASSBRK.WAV');
     glassSound.play();
+    stars += 1;
+    //document.getElementById("violation").innerHTML = 'Discharge of weapon.';
 
     //for (i = 0; i < scene.cars.length; i++){
       //car = scene.cars[i];
@@ -383,12 +392,12 @@ Scene.prototype.update = function() {
   }
 
   if (username) {
-    GTAref.push({username: username,
-                 type: scene.player1.data.type,
-                 url: scene.player1.data.url,
-                 lng: scene.player1.location.getLongitude(),
-                 lat: scene.player1.location.getLatitude(),
-                 alt: scene.player1.location.getAltitude()});
+    //GTAref.push({username: username,
+                 //type: scene.player1.data.type,
+                 //url: scene.player1.data.url,
+                 //lng: scene.player1.location.getLongitude(),
+                 //lat: scene.player1.location.getLatitude(),
+                 //alt: scene.player1.location.getAltitude()});
   }
 
 };
@@ -805,17 +814,34 @@ Truck.prototype.update = function() {
 
   for (i = 0; i < scene.cars.length; i++){
     car = scene.cars[i];
+    var recently_collided;
+    if (car === scene.player1 || me === scene.player1){
+      recently_collided = false;
+    }
     if (car !== me){
-      if (distance(me, car) < 3){
+      if (distance(me, car) < 2){
         me_loc = me.model.getLocation();
         me_cart = V3.latLonAltToCartesian([me_loc.getLatitude(), me_loc.getLongitude(), me_loc.getAltitude()]);
         car_loc = car.model.getLocation();
         car_cart = V3.latLonAltToCartesian([car_loc.getLatitude(), car_loc.getLongitude(), car_loc.getAltitude()]);
         vec = V3.sub(me_cart, car_cart);
 
-        me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
+        //if (V3.length(me.vel) > 40){
+          if (car === scene.player1 || (me === scene.player1 && me.data.type == 'car')){
+            recently_collided = true;
+            if (!colliding){
+              stars += 1;
+              colliding = true;
+              //document.getElementById("violation").innerHTML = 'Destruction of property';
+            }
+            var crashSound = new Audio('CRASHLOUD.mp3');
+            crashSound.play();
+          }
+        //}
+        me.vel = V3.add(me.vel, V3.scale(vec, 2 * V3.length(me.vel) * dt));
       }
     }
+    colliding = recently_collided;
   }
 
   me.modelFrame = M33.makeOrthonormalFrame(dir, up);
@@ -854,7 +880,7 @@ Truck.prototype.update = function() {
 
       me.vel = V3.sub(me.vel, V3.scale(veldir, drag * dt));
     }
-    if(!playingSiren && absSpeed > 20){
+    if(!playingSiren && absSpeed > 40){
       playSiren();
     }
   }
@@ -1147,5 +1173,15 @@ function playSiren() {
 }
 function stopSiren() {
   document.getElementById("forEmbed").remove();
+  playingSiren = false;
+}
+
+function playRain() {
+  document.getElementById("forEmbedRain").innerHTML="<embed src='RAIN.mp3' autostart=true loop=true volume=100 hidden=true>";
+  playingSiren = true;
+  return true;
+}
+function stopRain() {
+  document.getElementById("forEmbedRain").remove();
   playingSiren = false;
 }
