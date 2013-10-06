@@ -109,6 +109,85 @@ var addObject = function(object){
   object.model.setScale(scale);
 }
 
+/*
+ * Scene
+ * an array of cars
+ * an array of people
+ * and player1
+ *
+ * addObject
+ * removeObject
+ *
+ * update - update all objects
+ */
+
+function Scene() {
+  // initialize
+  var self = this;
+  self.cars = [];
+  self.people = [];
+
+  self.player1 = null;
+
+  self.initCars();
+  self.initPeople();
+}
+
+Scene.prototype.initCars = function() {
+  console.log("initCars");
+  var self = this;
+  // while (self.cars.length < 20) {
+  // }
+}
+
+Scene.prototype.initPeople = function() {
+  console.log("initPeople");
+  var self = this;
+  // while (self.people.length < 20) {
+  // }
+}
+
+Scene.prototype.addObject = function(object){
+  // adds an object to the scene
+  object.placemark = ge.createPlacemark('');
+  object.model = ge.createModel('');
+  
+  ge.getFeatures().appendChild(object.placemark);
+
+  object.model.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+  
+  object.linker = ge.createLink('');
+  object.linker.setHref(object.options.urls[0]);
+  object.model.setLink(object.linker);
+
+  object.placemark.setGeometry(object.model);
+  object.model.getLocation().setLatLngAlt(object.options.lat,
+                                          object.options.long,
+                                          object.options.alt);
+  scale = ge.createScale('');
+  scale.setX(object.options.scale);
+  scale.setY(object.options.scale);
+  scale.setZ(object.options.scale);
+  object.model.setScale(scale);
+}
+
+Scene.prototype.removeObject = function(object) {
+  // removes an object
+}
+
+Scene.prototype.update = function() {
+  var self = this;
+  cars.forEach(function(c, i) {
+    // if car is to far away move it
+  });
+
+  people.forEach(function(p, i) {
+    // if person is too far away, move him
+  });
+
+  // player1.update();
+}
+
 
 function Truck() {
   var me = this;
@@ -229,7 +308,6 @@ function keyDown(event) {
     switchModel = true;
     event.returnValue = false;
   } else if(event.keyCode == 32){
-    console.log("shoot");
     shootButtonDown = true;
     event.returnValue = false;
   }
@@ -295,7 +373,6 @@ Truck.prototype.tick = function() {
     muzzle_flash.options.alt = me.location.getAltitude();
     
     addObject(muzzle_flash);
-    console.log(muzzle_flash.getLocation().getLatitude());
     shootButtonDown = false;
   }
   var now = (new Date()).getTime();
