@@ -12,7 +12,7 @@ body {
 }
 
 #stars {
-  color: #eee;
+  color: #ff0;
   pointer-events: none;
   z-index: 1;
   font-size: 30pt;
