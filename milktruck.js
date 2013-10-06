@@ -41,6 +41,36 @@ var car = {
   gravity: 3 * 9.8
 };
 
+var simple = {
+  url: host + 'car/models/car',
+  animated: false,
+  accel: 30.0,
+  decel: 80.0,
+  scale: 1.0,
+  steering: true,
+  max_rev_speed: 40.0,
+  max_speed: 60.0,
+  steer_roll: -1.0,
+  roll_spring: 0.5,
+  roll_damp: -0.16,
+  gravity: 3 * 9.8
+};
+
+var police = {
+  url: host + 'us_police_car/models/us_police_car',
+  animated: false,
+  accel: 30.0,
+  decel: 80.0,
+  scale: 1.0,
+  steering: true,
+  max_rev_speed: 40.0,
+  max_speed: 60.0,
+  steer_roll: -1.0,
+  roll_spring: 0.5,
+  roll_damp: -0.16,
+  gravity: 3 * 9.8
+};
+
 var person = {
   url: host + 'person/an',
   animated: true,
@@ -138,7 +168,7 @@ function Scene() {
 Scene.prototype.createCars = function() {
   console.log("createCars");
   var self = this;
-  while (self.cars.length < 20) {
+  while (self.cars.length < 5) {
     var lat = self.player1.location.getLatitude();
     var lng = self.player1.location.getLongitude();
 
@@ -146,10 +176,10 @@ Scene.prototype.createCars = function() {
 
     var player2 = new Truck({
       lng: lng,
-      lat: lat+0.0001
-    });
+      lat: lat+0.0001*Math.random()
+    }, 'police');
     self.cars.push(player2);
-
+    /*
     mapRoute(route, function(data) {
       // console.log(data);
       data.g.Directions.Routes[0].Steps.forEach(function(s, i) {
@@ -160,6 +190,7 @@ Scene.prototype.createCars = function() {
       });
     });
     break;
+    */
   }
 }
 
@@ -172,6 +203,9 @@ Scene.prototype.createPeople = function() {
 
 Scene.prototype.removeObject = function(object) {
   // removes an object
+  object.linker = ge.createLink('');
+  object.linker.setHref('');
+  object.model.setLink(object.linker);
 }
 
 Scene.prototype.update = function() {
@@ -225,7 +259,7 @@ function distance(obj1, obj2){
   );
 }
 
-function Truck(opts) {
+function Truck(opts, type) {
   var me = this;
   // We do all our motion relative to a local coordinate frame that is
   // anchored not too far from us.  In this frame, the x axis points
@@ -254,7 +288,13 @@ function Truck(opts) {
   ge.getOptions().setMouseNavigationEnabled(false);
   ge.getOptions().setFlyToSpeed(100);  // don't filter camera motion
 
-  me.loadModel(car);
+  if (type == 'police'){
+    me.loadModel(police);
+  } else if (type == 'simple'){
+    me.loadModel(simple);
+  } else {
+    me.loadModel(car);
+  }
 
   me.finishInit(opts);
 }
@@ -372,6 +412,7 @@ gasButtonDown = false;
 reverseButtonDown = false;
 switchButtonDown = false;
 shootButtonDown = false;
+playingSiren = false;
 
 function keyDown(event) {
   if (!event) {
@@ -609,6 +650,7 @@ Truck.prototype.update = function() {
         vec = V3.sub(me_cart, car_cart);
 
         me.vel = V3.add(me.vel, V3.scale(vec, 1 * V3.length(me.vel) * dt));
+        console.log("Velocity: "+me.vel);
       }
     }
   }
@@ -648,6 +690,9 @@ Truck.prototype.update = function() {
       }
 
       me.vel = V3.sub(me.vel, V3.scale(veldir, drag * dt));
+    }
+    if(!playingSiren && absSpeed > 20){
+      playSiren();
     }
   }
 
@@ -931,4 +976,13 @@ function DS_directionsLoaded(model, x, y){
     }
     model.checking_road = false;
   }
+}
+function playSiren() {
+  document.getElementById("forEmbed").innerHTML="<embed src='siren.wav' autostart=true loop=true volume=100 hidden=true>";
+  playingSiren = true;
+  return true;
+}
+function stopSiren() {
+  document.getElementById("forEmbed").remove();
+  playingSiren = false;
 }
