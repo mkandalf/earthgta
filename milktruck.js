@@ -55,7 +55,8 @@ var muzzle_flash = {
     lat: 0,
     long: 0,
     alt: 0,
-    animated: false
+    animated: false,
+    scale: 0.1
   }
 };
 
@@ -100,7 +101,12 @@ var addObject = function(object){
   object.placemark.setGeometry(object.model);
   object.model.getLocation().setLatLngAlt(object.options.lat,
                                           object.options.long,
-                                          object.options.alt)
+                                          object.options.alt);
+  scale = ge.createScale('');
+  scale.setX(object.options.scale);
+  scale.setY(object.options.scale);
+  scale.setZ(object.options.scale);
+  object.model.setScale(scale);
 }
 
 
