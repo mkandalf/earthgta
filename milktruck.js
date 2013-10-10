@@ -17,9 +17,8 @@ limitations under the License.
 
 // Code for Monster Milktruck demo, using Earth Plugin.
 
-window.truck = null;
-
-host = 'http://localhost:8000/';
+// janky jank
+host = window.location.protocol + "//" + window.location.host + "/";
 
 model = 'car';
 
@@ -29,7 +28,7 @@ var stars = 0;
 var original_car = null;
 var colliding = false;
 
-function set_stars(){
+function set_stars() {
   var starchars = Array(Math.min(6, stars+1)).join('★');
   document.getElementById("stars").innerHTML = starchars;
 }
