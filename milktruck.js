@@ -25,7 +25,6 @@ model = 'car';
 
 var DS_map;
 var DS_directions;
-//var GTAref = new Firebase('https://gtavi.firebaseio.com/');
 var stars = 0;
 var original_car = null;
 var colliding = false;
@@ -167,7 +166,6 @@ function plotCars(lat1, lon1, lat2, lon2, self, cb) {
   var route = "from: " + lat1 + ", " + lon1 + " to: " + lat2 + ", " + lon2;
   get_directions(route, function(data) {
     var steps = data.g.Directions.Routes[0].Steps;
-    console.log(steps);
 
     var i;
     for (i = 0; i < steps.length - 1; i++){
@@ -190,12 +188,10 @@ function plotCars(lat1, lon1, lat2, lon2, self, cb) {
       var o = dist / 100.0;
       var s = V3.sub(p2, p1);
       var n = V3.normalize(s);
-      console.log('num cars: ' + o);
       for (var j = 0; j < Math.floor(o); j++) {
         var v = V3.scale(n, j * dist / 100.0);
         var m = V3.cartesianToLatLonAlt(V3.add(p1,v));
 
-        console.log(m);
         
         var car = new Truck({
           lat: m[0],
@@ -795,9 +791,6 @@ Truck.prototype.update = function() {
             recently_collided = true;
             if (V3.length(me.vel) > 50){
               document.getElementById('wasted').className = 'wasted';
-            }
-            else {
-              console.log(V3.length(me.vel));
             }
             if (!colliding){
               stars += 1;
