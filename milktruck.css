@@ -1,0 +1,46 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#map3d {
+  height: 600px;
+  z-index: -1;
+}
+
+#teleport {
+}
+
+#stars {
+  color: #ff0;
+  pointer-events: none;
+  z-index: 1;
+  font-size: 30pt;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#violation{
+  color: #eee;
+  pointer-events: none;
+  z-index: 1;
+  font-size: 25pt;
+  position: absolute;
+  width: 100%;
+  top: 10px;
+  text-align:center;
+}
+#wasted {
+  position: absolute;
+  opacity: 0.5;
+  background-color: #444;
+  height: 600px;
+  /*width: 400px;*/
+  width: 100%;
+}
+
+.wasted {
+  z-index: 100;
+  background: url('wasted.png') repeat;
+}

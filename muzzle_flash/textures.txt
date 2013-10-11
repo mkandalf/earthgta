@@ -1,0 +1,2 @@
+<../images/LRflash0002.png> <../images/LRflash0002.png>
+<../images/LRflash1.png> <../images/LRflash1.png>

@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>GTA6</title>
+  <link rel=stylesheet href='milktruck.css' type='text/css' />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+  <script src='https://cdn.firebase.com/v0/firebase.js'></script>
+  <script src="http://www.google.com/jsapi?key=AIzaSyCr9iLzNdlN3ipdEoQ2Iogk_1w2d1GW8AM"></script>
+  <script type="text/javascript" src="./lib/math3d.js"></script>
+  <script type="text/javascript" src="./lib/keyboard-focus-hack.js"></script>
+  <script type="text/javascript" src="./lib/kmldomwalk.js"></script>
+  <script type="text/javascript">
+  </script>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+
+  <script type="text/javascript" src="milktruck.js"></script>
+  <script type="text/javascript">
+    google.load("earth", "1");
+    google.load("maps", "2");
+
+    var ge = null;
+    var geocoder;
+    var scene;
+
+    function el(e) { return document.getElementById(e); }
+
+    function init() {
+      geocoder = new GClientGeocoder();
+
+      google.earth.createInstance("map3d", initCallback, failureCallback);
+      DS_map = new GMap2(document.getElementById('map'));
+      DS_directions = new google.maps.Directions(DS_map, null);
+    }
+
+    function initCallback(object) {
+      ge = object;
+      ge.getWindow().setVisibility(true);
+      ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true);
+      ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
+      ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT);
+      scene = new Scene();
+
+      keyboardFocusHack(ge);
+    }
+
+    function failureCallback(err) {
+      // This function will be called if plugin fails to load, in case you need to handle that error condition.
+      wasted();
+    }
+
+    function submitLocation() {
+      doGeocode(el('address').value);
+    }
+
+    function doGeocode(address) {
+      geocoder.getLatLng(address, function(point) {
+        if (point) {
+          if (ge != null && scene != null && scene.player1 != null) {
+            scene.player1.teleportTo(point.y, point.x);
+          }
+        }
+      });
+    }
+
+  </script>
+  <style>
+    @size: 10px;
+    body{
+      background: #d7eef5;
+    }
+    .drop{
+      position: absolute;
+      left: 0px;
+      z-index: 0;
+      top: @size*-1px;
+      width: @size;
+      height: @size;
+      background: #79dbfc;
+      border-radius: 0px @size/2 @size/2 @size/2;
+      transform: rotate(45deg);
+    }
+    .state{
+      font-size: 10px;
+      font-family: tahoma;
+      color: #333;
+    }
+  </style>
+</head>
+  <body onload='init()' onunload="GUnload()" onKeyDown="return keyDown(event);" onKeyUp="return keyUp(event);">
+    <div id='wasted'>
+    </div>
+    <div id='stars'>
+      ★ ★ ★ ★ 
+    </div>
+    <div id='violation'>
+    </div>
+    <div id='map3d'></div>
+    <div id='teleport'>
+      <form name='searchform' id='searchform' action='javascript:submitLocation();void(0);'>
+        <input type=text size=60 id='address' placeholder='enter a location to go there'/>
+        <input type=submit value='Teleport!'/>
+      </form>
+  
+      Presets:
+      <input type=button value="Th' Plex" onclick="scene.player1.teleportTo(37.423501,-122.086744,90);"/>
+      <input type=button value="San Francisco" onclick="doGeocode('San Francisco');"/>
+      <input type=button value="Whistler" onclick="scene.player1.teleportTo(50.085734,-122.855824,220);"/>
+      <input type=button value="Pismo" onclick="scene.player1.teleportTo(35.040675,-120.629513,170);"/>
+      <input type=button value="Tokyo" onclick="scene.player1.teleportTo(35.668607,139.822026,180);"/>
+      <input type=button value="Everest" onclick="scene.player1.teleportTo(27.991283,86.924340,70);"/>
+    </div>
+    <div id='map' style='display:none'></div>
+    <div id="forEmbed" style="position: absolute;"></div>
+    <div id="forEmbedRain" style="position: absolute;"></div>
+    <script>
+      var wasted = function() {
+        document.getElementById('wasted').className = 'wasted';
+      }
+    </script>
+  </body>
+</html>
+<script>
+(function(){
+  setInterval(set_stars, 50);
+})();
+  </script>
